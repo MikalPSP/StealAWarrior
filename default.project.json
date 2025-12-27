@@ -1,0 +1,38 @@
+{
+  "name": "StealAWarrior",
+  "globIgnorePaths": ["**/*.spec.lua","Packages/**/wally.toml"],
+
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Packages": {
+        "$path": "Packages"
+      },
+      "Shared": {
+        "$path": "src/shared"
+      },
+      "GameData": {
+        "$path": "src/GameData"
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Source": {
+        "$path": "src/server"
+      }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Source": {
+          "$path": "src/client"
+        }
+      }
+    }
+  }
+}
