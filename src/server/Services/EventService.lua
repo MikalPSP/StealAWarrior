@@ -147,7 +147,7 @@ function EventService:EndEvent()
         end
     end
 
-    Knit.GetService("GameService").OnNotify:FireAll("The Event Has Ended!")
+    Knit.GetService("GameService").Client.OnNotify:FireAll("The Event Has Ended!")
 
     self.CurrentEvent = nil
     self.Client.OnEventChanged:FireAll(self.CurrentEvent)
