@@ -143,12 +143,11 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
             characterModel:SetAttribute("Mutation",mutation)
         end
 
-        for _,x in characterModel:GetChildren() do
-            if x:IsA("BasePart") then x.Anchored = true end
-        end
-
         if characterModel:GetAttribute("Scale") then
             characterModel:ScaleTo(characterModel:GetAttribute("Scale"))
+        end
+        if not characterModel:FindFirstChildWhichIsA("Humanoid") then
+            characterModel.PrimaryPart.Anchored = true
         end
 
         characterModel:PivotTo(self.Slot:GetPivot())
@@ -195,8 +194,12 @@ function CharacterSlot:SetMoving(active)
     if self.CurrentModel then
         self.CurrentModel:PivotTo(self.Slot:GetPivot()*CFrame.new(0,active and -100 or 0,0))
         self.CurrentModel:SetAttribute("IsMoving",active)
+        if self.CurrentModel:FindFirstChildWhichIsA("Humanoid") then
+            self.CurrentModel.PrimaryPart.Anchored = active
+        end
     end
 end
+
 
 function CharacterSlot:GetCharacter()
     return self.CurrentModel

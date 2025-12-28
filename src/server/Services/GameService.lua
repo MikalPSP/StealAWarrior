@@ -134,7 +134,7 @@ function GameService:KnitStart()
         local multiplier = data.Statistics.IncomeMultiplier or 1
         if isVIP then multiplier+=.5 end
         if isDouble then multiplier+=2 end
-        if isGroup then multiplier+=.2 end
+        if isGroup then multiplier+=.5 end
         if newPlot then
             local inventoryData = data.Inventory
             local lastLoginTime = profileService:GetProfile(player):GetMetaTag("LastOnlineTime")
@@ -218,7 +218,7 @@ function GameService:KnitStart()
                 local isGroup = player:IsInGroup(6124305)
                 if isVIP then multiplier+=.5 end
                 if isDouble then multiplier+=2 end
-                if isGroup then multiplier+=.2 end
+                if isGroup then multiplier+=.5 end
                 plot.CollectZone:UpdateUI("MainText",{ Text = string.format("COINS MULTI:\nx%.1f",multiplier) })
             end
 
@@ -304,7 +304,7 @@ function GameService:KnitStart()
             local canSpawn = now - (timestamps.Default or 0) >= self.Settings.SpawnInterval
 
             if self.GameVotes.GoalReached and not self.GameVotes.DidSpawn then
-                if canSpawn then
+                if canSpawn and game.PrivateServerOwnerId == 0 then
                     guarantee = "Secret"
                     self.GameVotes.DidSpawn = true
                     --TODO: Maybe Automate To New Like Goal
@@ -352,7 +352,7 @@ function GameService:KnitStart()
                     self.Client.FriendBoost:SetFor(plr,friendBoost)
 
                     local isVIP, isDouble = economyService:PlayerHasPass(plr,"VIP"), economyService:PlayerHasPass(plr,"2X Coins")
-                    local isGroup = plr and plr:IsInGroup(6124305) or false
+                    local isGroup = (plr and plr.Parent~=nil) and plr:IsInGroup(6124305) or false
                     local totalProfit = 0
                     for i,chr in ipairs(inventoryData.Characters) do
                         if chr and chr ~= "Empty" and not chr.IsStolen and self.Characters[chr.Name] then
@@ -360,7 +360,7 @@ function GameService:KnitStart()
                             local multiplier = profileService:GetStatistics(plr,"IncomeMultiplier") or 1
                             if isVIP then multiplier+=.5 end
                             if isDouble then multiplier+=2 end
-                            if isGroup then multiplier+=.2 end
+                            if isGroup then multiplier+=.5 end
 
                             local profit = math.floor(baseProfit  * multiplier) -- * math.max(1,1+friendBoost))
 
