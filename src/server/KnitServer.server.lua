@@ -74,6 +74,8 @@ Knit.OnStart():andThen(function()
                 if #charName>0 then
                     Knit.GetService("GameService"):SpawnCharacter(charName,"Gold")
                 end
+            elseif msg=="serverluck" then
+                Knit.GetService("EventService"):SetServerLuck(2,60)
             elseif msg:match("^spawn.+$") then
                 local mutation, charName = msg:match("^spawn(%w-) (.+)")
 

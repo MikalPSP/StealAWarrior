@@ -46,7 +46,7 @@ local ProfileService = Knit.CreateService {
 
 	Settings = {
 		LogEconomyEvents = false,
-		DataVersion = "TEST_BUILD_1",
+		DataVersion = "TEST_BUILD_2",
 		SavePlayTime = true
 	},
 	JoinTimes = {}
@@ -142,7 +142,9 @@ function ProfileService:LoadProfile(player)
 			local profile_version = profile:GetMetaTag("DataVersion")
 			if typeof(profile_version)=="string" and profile_version ~= self.Settings.DataVersion then
 
-				if table.find({"DEV_BUILD","ALPHA_BUILD","BETA_BUILD"},profile_version) then
+				if profile_version == "TEST_BUILD_1" then
+					self:GlobalDispatch(player.UserId,{ type = "CLEAR_CHARACTERS"})
+				elseif table.find({"DEV_BUILD","ALPHA_BUILD","BETA_BUILD"},profile_version) then
 					warn(string.format("[ProfileService] Mismatched DataVersion Found For <User_%d>. Resetting Data",player.UserId))
 					self:GlobalDispatch(player.UserId,{ type = "RESET_DATA"})
 				end

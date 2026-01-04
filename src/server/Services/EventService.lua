@@ -32,8 +32,14 @@ local EventService = Knit.CreateService({
         ["Shocked"] = {
             Duration = 300,
             MutationType = "Shocked",
-            Description = "Players get shocked when they touch the ground!",
+            Description = "All warriors get shocked when they touch the ground!",
         },
+
+        ["Midas Touch"] = {
+            Duration = 180,
+            MutationType = "Gold",
+            Description = "All warriors turn to gold!"
+        }
     }
 })
 
@@ -66,12 +72,8 @@ function EventService:KnitStart()
                 }
                 self.Client.OnServerLuckChanged:FireAll(self.ServerLuck.CurrentLevel)
             end
-            
+           
             if self.CurrentEvent then
-                if now >= self.CurrentEvent.Timestamp then
-                    self:EndEvent()
-                end
-
                 if self.CurrentEvent.Name == "Shocked" then
                     local timeSinceLastStrike = tick()-(self._lastLightningStrike or 0)
 
@@ -88,6 +90,10 @@ function EventService:KnitStart()
                         GameData.Effects.lightningStrike(pos)
                         self._lastLightningStrike = tick()
                     end
+                end
+
+                if now >= self.CurrentEvent.Timestamp then
+                    self:EndEvent()
                 end
             end
         end

@@ -228,6 +228,7 @@ function Service:KnitStart()
 		end)
 
 		self.Client.GamePasses:SetFor(plr, plrPasses)
+		plr:SetAttribute("IsVIP",self:PlayerHasPass(plr,"VIP"))
 	end
 
 	self.Connections.playerDataAdded = profileService.PlayerDataLoaded:Connect(playerAdded)
@@ -249,6 +250,11 @@ function Service:KnitStart()
 			end
 		end
 	)
+
+	self.OnGamePassPurchased:Connect(function(plr, passName)
+		if passName == "VIP" then plr:SetAttribute("IsVIP",true) end
+	end)
+
 
 	MarketplaceService.ProcessReceipt = function(receiptInfo)
 		local purchaseId = receiptInfo.PurchaseId

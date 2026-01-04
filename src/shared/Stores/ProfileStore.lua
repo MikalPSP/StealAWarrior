@@ -159,23 +159,32 @@ local statusReducer = function(state,action)
         TutorialCompleted = false,
         OwnedGamepasses = {},
         IsVIP = false,
-        AutoBuyItems = {}
+        AutoBuyItems = {},
+        Spins = 1,
     }
 
     local payload = action.payload
     if action.type == "SET_TUTORIAL_COMPLETED" then
-        return Sift.Dictionary.merge(state,{ TutorialCompleted = true })
+        return Dictionary.merge(state,{ TutorialCompleted = true })
 	elseif action.type == "ADD_GAME_PASS" and typeof(payload) == "number" then
-		return Sift.Dictionary.update(state, "OwnedGamepasses", function(arr)
+		return Dictionary.update(state, "OwnedGamepasses", function(arr)
 			return Sift.Set.toArray(Sift.Set.add(Sift.Array.toSet(arr), payload))
 		end)
     elseif action.type == "SET_AUTO_BUY" and typeof(payload)=="table" then
-        return Sift.Dictionary.update(state,"AutoBuyItems",function(set)
+        return Dictionary.update(state,"AutoBuyItems",function(set)
             if payload.active then
                 return Sift.Set.add(set,payload.key)
             else
                 return Sift.Set.delete(set,payload.key)
             end
+        end)
+    elseif action.type == "ADD_SPINS" then
+        return Dictionary.update(state,"Spins",function(old)
+            return math.max(old + math.min(1,tonumber(payload) or 0))
+        end)
+    elseif action.type == "USE_SPINS" then
+        return Dictionary.update(state,"Spins",function(old)
+            return math.max(old-1,0)
         end)
     end
     return state

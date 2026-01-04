@@ -29,7 +29,7 @@ local GameService = Knit.CreateService({
         IncomeRate = Knit.CreateProperty(0),
         FriendBoost = Knit.CreateProperty(0),
 
-        GameVotes = Knit.CreateProperty({})
+        GameVotes = Knit.CreateProperty()
     },
 
     Settings = {
@@ -224,7 +224,7 @@ function GameService:KnitStart()
 
             for i,slot in ipairs(plot.Slots) do
                 local chr = characters[i]
-                if chr and chr ~= "Empty" then
+                if chr and chr ~= "Empty" and typeof(chr.Tier)=="number" then
                     local hasDupes = Sift.Array.count(characters,function(v,idx)
                         return v.Name == chr.Name and v.Tier == chr.Tier and v.Mutation == chr.Mutation
                     end)>=2
@@ -413,12 +413,11 @@ function GameService:GetGameVotes()
     end
 
     local ok, data = pcall(function()
-        local ret = HttpService:GetAsync("https://games.roproxy.com/v1/games/votes?universeIds=8662373722")
+        local ret = HttpService:GetAsync("https://games.rotunnel.com/v1/games/votes?universeIds=8662373722")
         return HttpService:JSONDecode(ret).data[1]
     end)
 
     if ok and data then
-        print(data)
         return { Likes = data.upVotes, Dislikes = data.downVotes }
     else warn("Failed to fetch game votes") end
 end
@@ -469,15 +468,14 @@ function GameService:BuildViewportItem(instance)
 		local base = template.PrimaryPart
 		for _, x in ipairs(template:GetDescendants()) do
 			if x:IsA("BasePart") then
-				if not base then
-					base = x
-				end
+				if not base then base = x end
 				if x ~= base then
 					local weld = Instance.new("WeldConstraint")
 					weld.Part0 = base
 					weld.Part1 = x
 					weld.Parent = x
 				end
+                x.Anchored = true
 			elseif x:IsA("Script") then
 				x:Destroy()
 			end
@@ -731,16 +729,16 @@ function GameService:SpawnCharacter(name, mutation)
                     if not didFinish then
 
                         if charHumanoid then
-                            charHumanoid:MoveTo(plot.Gate.PrimaryPart.Position,plot.Gate.PrimaryPart)
+                            charHumanoid:MoveTo(plot.Gate:GetPivot().Position)
                         else
                             local controller = charModel:FindFirstChildWhichIsA("ControllerManager")
                             if controller then
-                                local dir = ((plot.Gate.PrimaryPart.Position - charModel:GetPivot().Position)*Vector3.new(1,0,1)).Unit
+                                local dir = ((plot.Gate:GetPivot().Position - charModel:GetPivot().Position)*Vector3.new(1,0,1)).Unit
                                 controller.FacingDirection, controller.MovingDirection = dir, dir
                             end
                         end
 
-                        local dist = ((charModel:GetPivot().Position - plot.Gate.PrimaryPart.Position)*Vector3.new(1,0,1)).Magnitude
+                        local dist = ((charModel:GetPivot().Position - plot.Gate:GetPivot().Position)*Vector3.new(1,0,1)).Magnitude
                         local timeSinceStart = tick() - startTime
 
                         didFinish = dist<=5 or timeSinceStart>=60
@@ -903,7 +901,7 @@ function GameService:StealCharacter(player, plot, idx)
                     if plrCharacter.Humanoid then
                         plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed*.75
                     end
-                    local dist = ((charModel:GetPivot().Position - playerPlot.Gate.PrimaryPart.Position)*Vector3.new(1,0,1)).Magnitude
+                    local dist = ((charModel:GetPivot().Position - playerPlot.Gate:GetPivot().Position)*Vector3.new(1,0,1)).Magnitude
                     didFinish = dist<=5
                 else
                     for _,conn in connections do conn:Disconnect() end
@@ -932,70 +930,6 @@ end
 
 function GameService:SendNotification(player, nMessage: string, nType: "Default"|"Warning"|"Info"|Color3, duration: number?)
     self.Client.OnNotify:Fire(player, nMessage, nType, duration)
-end
-
-function GameService.Client:Rebirth(player)
-    local profileService = Knit.GetService("ProfileService")
-    local nextRebirth = math.max(1, profileService:GetStatistics(player,"Rebirths")+1)
-    local inventoryData = profileService:GetInventory(player)
-    local rebirthData = GameData.RebirthData[`Rebirth {nextRebirth}`]
-
-    if rebirthData and inventoryData then
-        local canRebirth = Sift.Dictionary.every(rebirthData.Requirements, function(value, key)
-            if key == "Coins" then
-                return inventoryData[key] >= value
-            elseif key == "Characters" then
-                local currentCharacters = profileService:GetInventory(player, "Characters")
-                return Sift.Array.every(value, function(req)
-                    return Sift.Array.findWhere(currentCharacters, function(v)
-                        return v ~= "Empty" and v.Name == req
-                    end) ~= nil
-                end)
-            end
-            return true
-        end)
-
-        if canRebirth then
-
-            profileService:Dispatch(player,{type = "SET_COINS", payload = 0})
-            profileService:Dispatch(player,{type = "CLEAR_CHARACTERS"})
-
-            for rewardKey, rewardValue in rebirthData.Rewards do
-                if rewardKey == "Coins" then 
-                    profileService:Dispatch(player,{
-                        type = "ADD_COINS", payload = rewardValue,
-                        logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
-                    })
-                elseif rewardKey == "LockTime" then
-                    profileService:Dispatch(player,{ type = "ADD_LOCK_TIME", payload = rewardValue })
-                elseif rewardKey == "TierLimit" then
-                    profileService:Dispatch(player,{ type = "SET_TIER_LIMIT", payload = rewardValue })
-                elseif rewardKey == "IncomeMultiplier" then
-                    profileService:Dispatch(player,{ type = "ADD_MULTIPLIER", payload = rewardValue })
-                elseif rewardKey == "Floor" then
-                    profileService:Dispatch(player, { type = "ADD_FLOOR"})
-                end
-            end
-
-            profileService:Dispatch(player,{ type = "ADD_REBIRTH" })
-
-            local humanoid = player.Character and player.Character.Humanoid
-            if humanoid then humanoid:UnequipTools() end
-            for _,x in player.Backpack:GetChildren() do if x:IsA("Tool") and x.Name ~= "Bat" then x:Destroy() end end
-            for _,x in player.StarterGear:GetChildren() do if x:IsA("Tool") and x.Name ~= "Bat" then x:Destroy() end end
-
-            self.Server:SendNotification(player, `You Have Reached Rebirth {nextRebirth}!`, "Info")
-            return true
-        else
-            self.Server:SendNotification(player, "Rebirth requirements not met!", "Warning")
-            return false, "Rebirth Requirements Not Met"
-        end
-    elseif not rebirthData then
-        self.Server:SendNotification(player, "Max Rebirth Reached!", "Warning")
-        return false,"Max Rebirth Reached"
-    elseif not inventoryData then
-        return false,"Profile Data Not Loaded"
-    end
 end
 
 function GameService:MoveCharacter(player, slotIdx, is_placing)
@@ -1111,6 +1045,101 @@ function GameService:GiveCharacter(player, charData)
         type = "ADD_CHARACTER",
         payload = { name = charData.Name, tier = charData.Tier, mutation = charData.Mutation }
     })
+end
+
+function GameService.Client:GrantSpinReward(player, rewardType)
+
+    local coinRewards = {
+        ["Coins_25K"] = 25000,
+        ["Coins_100K"] = 100000,
+        ["Coins_1M"] = 1000000
+    }
+
+    if rewardType == "ServerLuck" then
+        local eventService = Knit.GetService("EventService")
+        eventService:SetServerLuck(math.max(2,eventService.CurrentLevel or 1),15*30)
+
+    elseif rewardType == "Character" then
+
+    elseif rewardType == "Event" then
+        Knit.GetService("EventService"):StartEvent("Midas Touch")
+
+    elseif typeof(coinRewards[rewardType])=="number" then
+        local rate = self.Client.IncomeRate:GetFor(player)
+        local amount = coinRewards[rewardType]
+
+        Knit.GetService("ProfileService"):Dispatch(player,{
+            type = "ADD_COINS",
+            payload = amount,
+            logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay }
+        })
+
+        self.Server:SendNotification(player, string.format("+%s COIN$ Rewarded",GameData.Utils.formatNumber(amount)), Color3.fromRGB(253, 216, 53))
+    end
+end
+
+function GameService.Client:Rebirth(player)
+    local profileService = Knit.GetService("ProfileService")
+    local nextRebirth = math.max(1, profileService:GetStatistics(player,"Rebirths")+1)
+    local inventoryData = profileService:GetInventory(player)
+    local rebirthData = GameData.RebirthData[`Rebirth {nextRebirth}`]
+
+    if rebirthData and inventoryData then
+        local canRebirth = Sift.Dictionary.every(rebirthData.Requirements, function(value, key)
+            if key == "Coins" then
+                return inventoryData[key] >= value
+            elseif key == "Characters" then
+                local currentCharacters = profileService:GetInventory(player, "Characters")
+                return Sift.Array.every(value, function(req)
+                    return Sift.Array.findWhere(currentCharacters, function(v)
+                        return v ~= "Empty" and v.Name == req
+                    end) ~= nil
+                end)
+            end
+            return true
+        end)
+
+        if canRebirth then
+
+            profileService:Dispatch(player,{type = "SET_COINS", payload = 0})
+            profileService:Dispatch(player,{type = "CLEAR_CHARACTERS"})
+
+            for rewardKey, rewardValue in rebirthData.Rewards do
+                if rewardKey == "Coins" then 
+                    profileService:Dispatch(player,{
+                        type = "ADD_COINS", payload = rewardValue,
+                        logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
+                    })
+                elseif rewardKey == "LockTime" then
+                    profileService:Dispatch(player,{ type = "ADD_LOCK_TIME", payload = rewardValue })
+                elseif rewardKey == "TierLimit" then
+                    profileService:Dispatch(player,{ type = "SET_TIER_LIMIT", payload = rewardValue })
+                elseif rewardKey == "IncomeMultiplier" then
+                    profileService:Dispatch(player,{ type = "ADD_MULTIPLIER", payload = rewardValue })
+                elseif rewardKey == "Floor" then
+                    profileService:Dispatch(player, { type = "ADD_FLOOR"})
+                end
+            end
+
+            profileService:Dispatch(player,{ type = "ADD_REBIRTH" })
+
+            local humanoid = player.Character and player.Character.Humanoid
+            if humanoid then humanoid:UnequipTools() end
+            for _,x in player.Backpack:GetChildren() do if x:IsA("Tool") and x.Name ~= "Bat" then x:Destroy() end end
+            for _,x in player.StarterGear:GetChildren() do if x:IsA("Tool") and x.Name ~= "Bat" then x:Destroy() end end
+
+            self.Server:SendNotification(player, `You Have Reached Rebirth {nextRebirth}!`, "Info")
+            return true
+        else
+            self.Server:SendNotification(player, "Rebirth requirements not met!", "Warning")
+            return false, "Rebirth Requirements Not Met"
+        end
+    elseif not rebirthData then
+        self.Server:SendNotification(player, "Max Rebirth Reached!", "Warning")
+        return false,"Max Rebirth Reached"
+    elseif not inventoryData then
+        return false,"Profile Data Not Loaded"
+    end
 end
 
 function GameService.Client:StealCharacter(player, instance)

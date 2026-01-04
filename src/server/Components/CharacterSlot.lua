@@ -143,11 +143,22 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
             characterModel:SetAttribute("Mutation",mutation)
         end
 
+        for _,x in characterModel:GetDescendants() do
+            if x:IsA("BasePart") then x.CollisionGroup = "Characters" end
+        end
+
         if characterModel:GetAttribute("Scale") then
             characterModel:ScaleTo(characterModel:GetAttribute("Scale"))
         end
-        if not characterModel:FindFirstChildWhichIsA("Humanoid") then
-            characterModel.PrimaryPart.Anchored = true
+
+        characterModel.PrimaryPart.Anchored = true
+
+        if characterModel:FindFirstChildWhichIsA("Humanoid") then
+            task.delay(1,function()
+                if characterModel.PrimaryPart then
+                    characterModel.PrimaryPart.Anchored = false
+                end
+            end)
         end
 
         characterModel:PivotTo(self.Slot:GetPivot())

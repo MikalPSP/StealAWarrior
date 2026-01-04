@@ -156,10 +156,9 @@ end
 function Plot:LoadCharacters(characters: {Name: string})
      for i,slot in self.Slots do
           local charData = characters[i]
-          if typeof(charData)=="table" and charData ~= "Empty" then
+          if charData ~= "Empty" and typeof(charData)=="table" and typeof(charData.Name)=="string"  then
                local modelTemplate = CharacterFolder:FindFirstChild(charData.Name):Clone()
                if modelTemplate and not (slot.CurrentModel and slot.CurrentModel.Name == modelTemplate.Name) then
-
                     slot:AttachCharacter(modelTemplate, charData.Mutation)
                end
                slot:SetAmount(charData.Reward, charData.OfflineReward)
