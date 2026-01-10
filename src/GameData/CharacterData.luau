@@ -99,6 +99,10 @@ local Data = {
     --["Napolini Cannonini"]     = { Index = 6,  Rarity = "Secret", Era = "Medieval",        Profit = 25000, Price = 10_000_000, WeightFactor = 0 },
     ["The Emperor"]            = { Index = 7,  Rarity = "Secret", Era = "Ancient",         Profit = 50000, Price = 25_000_000, WeightFactor = 0 },
 
+    ["Rare Lucky Warrior"]      = { Index = 1, Rarity = "Rare",      Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
+    ["Legendary Lucky Warrior"] = { Index = 2, Rarity = "Legendary", Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
+    ["Mythic Lucky Warrior"]    = { Index = 3, Rarity = "Mythic",    Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0},
+    ["Secret Lucky Warrior"]    = { Index = 4, Rarity = "Secret",    Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
 
 }
 

@@ -1,5 +1,6 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Lighting = game:GetService("Lighting")
+local TweenService = game:GetService("TweenService")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
 local Sift = require(ReplicatedStorage.Packages.Sift)
@@ -24,18 +25,36 @@ local EventService = Knit.CreateService({
     CurrentEvent = nil,
 
     Settings = {
-        EventWeights = { Shocked = 5},
-        EventInterval = 2*3600
+        EventWeights = { Shocked = 2, Galactic = 1, Volcanic = 4, Acid = 3 },
+        EventInterval = 3600
     },
 
     AvailableEvents = {
         ["Shocked"] = {
             Duration = 300,
             MutationType = "Shocked",
-            Description = "All warriors get shocked when they touch the ground!",
+            Description = "Warriors get shocked when they touch the ground!",
         },
 
-        ["Midas Touch"] = {
+        ["Galactic"] = {
+            Duration = 300,
+            MutationType = "Galaxy",
+            Description = "Warriors get transformed by deep space events!",
+        },
+
+        ["Volcanic"] = {
+            Duration = 300,
+            MutationType = "Fire",
+            Description = "Warriors are ignited with flames!",
+        },
+
+        ["Acid"] = {
+            Duration = 300,
+            MutationType = "Acid",
+            Description = "Warriors are covered in acid!",
+        },
+
+        ["Gold"] = {
             Duration = 180,
             MutationType = "Gold",
             Description = "All warriors turn to gold!"
@@ -76,8 +95,6 @@ function EventService:KnitStart()
             if self.CurrentEvent then
                 if self.CurrentEvent.Name == "Shocked" then
                     local timeSinceLastStrike = tick()-(self._lastLightningStrike or 0)
-
-
                     if (timeSinceLastStrike>2) and math.random() < 0.5 then
                         local pos = localRandom:NextUnitVector()*Vector3.new(250,0,200)
                         local params = RaycastParams.new()
@@ -129,14 +146,29 @@ function EventService:StartEvent(eventName)
     local lightingFolder = EventLightingFolder:FindFirstChild(eventName)
     if lightingFolder then
         for _,x in lightingFolder:GetChildren() do
-            local existing = Lighting:FindFirstChildWhichIsA(x.ClassName)
-            if existing then existing:Destroy() end
-            x:Clone().Parent = Lighting
+            if x:IsA("Folder") and x.Name == "EventVFX" then
+                local existing = workspace:FindFirstChild("EventVFX")
+                if existing then existing:Destroy() end
+                x:Clone().Parent = workspace
+            else
+                local existing = Lighting:FindFirstChildWhichIsA(x.ClassName)
+                if existing then existing:Destroy() end
+                x:Clone().Parent = Lighting
+            end
         end
+        Lighting.Brightness = lightingFolder:GetAttribute("Brightness") or 1
     end
 
     if eventName == "Shocked" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Lightning Event Has Started!", Color3.fromRGB(0, 170, 255))
+    elseif eventName == "Galactic" then
+        Knit.GetService("GameService").Client.OnNotify:FireAll("Galactic Event Has Started!", Color3.fromRGB(170, 0, 255)) 
+    elseif eventName == "Volcanic" then
+        Knit.GetService("GameService").Client.OnNotify:FireAll("Volcanic Event Has Started!", Color3.fromRGB(255, 85, 0))
+    elseif eventName == "Acid" then
+        Knit.GetService("GameService").Client.OnNotify:FireAll("Acidic Event Has Started!", Color3.fromRGB(0, 255, 0))  
+    elseif eventName == "Gold" then
+        Knit.GetService("GameService").Client.OnNotify:FireAll("Midas Touch Event Has Started!", Color3.fromRGB(255, 215, 0))
     end
 
     self.Client.OnEventChanged:FireAll(self.CurrentEvent)
@@ -151,6 +183,7 @@ function EventService:EndEvent()
             if existing then existing:Destroy() end
             x:Clone().Parent = Lighting
         end
+        Lighting.Brightness = 1
     end
 
     Knit.GetService("GameService").Client.OnNotify:FireAll("The Event Has Ended!")
@@ -177,11 +210,11 @@ function EventService:SetServerLuck(level, duration)
 end
 
 
-function EventService.Client:GetServerLuck(player)
+function EventService.Client:GetServerLuck()
     return self.Server.ServerLuck
 end
 
-function EventService.Client:GetCurrentEvent(player)
+function EventService.Client:GetCurrentEvent()
     return self.Server.CurrentEvent
 end
 

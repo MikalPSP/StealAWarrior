@@ -8,8 +8,10 @@ GameData.RebirthData = require(script.RebirthData)
 GameData.Mutations = {
     Gold = 1.25,
     Diamond = 1.5,
-    --Shocked = 4,
-    --Fire = 6,
+    Fire = 2,
+    Acid = 3,
+    Shocked = 4,
+    Galaxy = 6,
     Rainbow = 10
 }
 
@@ -30,7 +32,7 @@ GameData.Effects = require(script.Effects)
 
 
 GameData.calculateProfit = function(profit: number, stars: number, slotTier: number, mutation: string)
-    if typeof(profit)~="number" or profit<=0 then return end
+    if typeof(profit)~="number" or profit<=0 then return 0 end
 
     if typeof(mutation)=="string" and GameData.Mutations[mutation] then
         profit*=GameData.Mutations[mutation]

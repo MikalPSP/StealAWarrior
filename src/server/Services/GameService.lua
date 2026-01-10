@@ -34,7 +34,7 @@ local GameService = Knit.CreateService({
 
     Settings = {
 
-        SpawnPosition = CFrame.new(-303,10,0),
+        SpawnPosition = CFrame.new(-303,10,8),
         SpawnInterval = 4,
         SpawnLifetime = 120,
         RarityWeights = {
@@ -59,6 +59,11 @@ local GameService = Knit.CreateService({
 function GameService:KnitStart()
 
     self.Plots = Knit.Components.Plot:GetAll()
+
+    for _,x in ServerStorage.GameAssets.LuckyWarriors:GetChildren() do
+        if x:IsA("Model") then x.Parent = ServerStorage.GameAssets.Characters end
+    end
+    ServerStorage.GameAssets.LuckyWarriors:Destroy()
 
     self.Characters = Sift.Dictionary.map(GameData.CharacterData,function(charData,name)
         local instance = ServerStorage.GameAssets.Characters:FindFirstChild(name)
@@ -153,9 +158,7 @@ function GameService:KnitStart()
                             })
                         else
                             local chrData = self.Characters[chr.Name]
-                            if not chrData then
-                                warn("No character data for ",chr.Name) continue
-                            end
+                            if not chrData then continue end
                             local baseProfit = GameData.calculateProfit(chrData.Profit, chr.Tier, tierUpgrades and tierUpgrades[i].Level or 1, chrData.Mutation)
                             local profit = math.floor(self.Settings.OfflineProfitFactor * (offlineTime * baseProfit * multiplier))
                             profileService:Dispatch(player,{ type = "UPDATE_PROFIT", payload = {
@@ -258,6 +261,17 @@ function GameService:KnitStart()
     end)
 
 
+    economyService.OnProductGranted:Connect(function(player, productId)
+        local product = economyService.Products[productId]
+        if product and product.ProductType == "LuckyWarrior" then
+            local charData = self.Characters[product.Name]
+            if charData then
+                self:GiveCharacter(player, charData, true)
+                self:SendNotification(player, `You have received a {charData.Name}!`, Color3.fromRGB(255,215,0))
+            end
+        end
+    end)
+
     --game.StarterPlayer.CharacterWalkSpeed = 50
 
     Players.PlayerRemoving:Connect(function(plr)
@@ -355,7 +369,7 @@ function GameService:KnitStart()
                     local isGroup = (plr and plr.Parent~=nil) and plr:IsInGroup(6124305) or false
                     local totalProfit = 0
                     for i,chr in ipairs(inventoryData.Characters) do
-                        if chr and chr ~= "Empty" and not chr.IsStolen and self.Characters[chr.Name] then
+                        if chr and chr ~= "Empty" and not chr.IsStolen and self.Characters[chr.Name]  then
                             local baseProfit = GameData.calculateProfit(self.Characters[chr.Name].Profit, chr.Tier, tierUpgrades and tierUpgrades[i].Level or 1, chr.Mutation)
                             local multiplier = profileService:GetStatistics(plr,"IncomeMultiplier") or 1
                             if isVIP then multiplier+=.5 end
@@ -402,6 +416,7 @@ function GameService:KnitStart()
             task.wait(RunService:IsStudio() and 1 or 60)
         end
     end)
+
 end
 
 function GameService:GetGameVotes()
@@ -505,7 +520,7 @@ function GameService:GetRandomCharacter(rarity)
 
     local mutationData = self.Settings.MutationWeights
     local data = Sift.Dictionary.map(self.Characters,function(v)
-        if typeof(rarity)=="string" and v.Rarity ~= rarity then return end
+        if typeof(rarity)=="string" and v.Rarity ~= rarity or v.Type == "LuckyWarrior" then return end
 
         local weight = self.Settings.RarityWeights[v.Rarity] or 0
         if typeof(v.WeightFactor)=="number" then
@@ -566,10 +581,10 @@ end
 function GameService:SpawnCharacter(name, mutation)
     local charData = self.Characters[name]
     if charData and charData.Instance then
-        if table.find({"Epic","Legendary","Mythic"},charData.Rarity) then
-            self.Client.OnNotify:FireAll(`{charData.Rarity} Spawned!`,RarityColors[charData.Rarity])
-        elseif charData.Rarity == "Secret" then
+        if charData.Rarity == "Secret" or charData.Type == "LuckyWarrior" then
             self.Client.OnNotify:FireAll(`{charData.Name} Spawned!`,"Rainbow")
+        elseif table.find({"Epic","Legendary","Mythic"},charData.Rarity) then
+            self.Client.OnNotify:FireAll(`{charData.Rarity} Spawned!`,RarityColors[charData.Rarity])
         end
 
         local profileService = Knit.GetService("ProfileService")
@@ -606,6 +621,11 @@ function GameService:SpawnCharacter(name, mutation)
 
                 for _,x in eff:GetDescendants() do
                     if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
+                end
+
+                local mainBone = charData.Type == "LuckyWarrior" and charModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
+                if mainBone then
+                    for _,x in eff:GetChildren() do x.Parent = mainBone end
                 end
             end
 
@@ -796,6 +816,9 @@ function GameService:StealCharacter(player, plot, idx)
         return
     elseif not hasEmptySlot then
         self:SendNotification(player, "Not enough space. Free up a character slot!", "Warning")
+        return
+    elseif targetSlot and not targetSlot.IsStealable then
+        self:SendNotification(player,"This character can not be stolen!","Warning")
         return
     elseif player.Character and targetSlot and targetSlot.CurrentModel and not targetSlot.IsStolen and not targetSlot.IsMoving then
 
@@ -1039,11 +1062,14 @@ function GameService:MoveCharacter(player, slotIdx, is_placing)
     end
 end
 
-function GameService:GiveCharacter(player, charData)
+function GameService:GiveCharacter(player, charData, is_permanent)
     local profileService = Knit.GetService("ProfileService")
     profileService:Dispatch(player, {
         type = "ADD_CHARACTER",
-        payload = { name = charData.Name, tier = charData.Tier, mutation = charData.Mutation }
+        payload = {
+            name = charData.Name, tier = charData.Tier, mutation = charData.Mutation,
+            permanent = is_permanent or false, charType = charData.Type,
+        }
     })
 end
 
@@ -1057,15 +1083,14 @@ function GameService.Client:GrantSpinReward(player, rewardType)
 
     if rewardType == "ServerLuck" then
         local eventService = Knit.GetService("EventService")
-        eventService:SetServerLuck(math.max(2,eventService.CurrentLevel or 1),15*30)
+        eventService:SetServerLuck(math.max(2,eventService.CurrentLevel or 1),15*60)
 
     elseif rewardType == "Character" then
 
     elseif rewardType == "Event" then
-        Knit.GetService("EventService"):StartEvent("Midas Touch")
+        Knit.GetService("EventService"):StartEvent("Shocked")
 
     elseif typeof(coinRewards[rewardType])=="number" then
-        local rate = self.Client.IncomeRate:GetFor(player)
         local amount = coinRewards[rewardType]
 
         Knit.GetService("ProfileService"):Dispatch(player,{
@@ -1102,7 +1127,7 @@ function GameService.Client:Rebirth(player)
         if canRebirth then
 
             profileService:Dispatch(player,{type = "SET_COINS", payload = 0})
-            profileService:Dispatch(player,{type = "CLEAR_CHARACTERS"})
+            profileService:Dispatch(player,{type = "CLEAR_CHARACTERS", payload = { excludePermanent = true }})
 
             for rewardKey, rewardValue in rebirthData.Rewards do
                 if rewardKey == "Coins" then 
@@ -1168,6 +1193,29 @@ function GameService.Client:SellCharacter(player, instance)
                 type = "ADD_COINS", payload = sell_price,
                 logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
             })  
+            return true
+        end
+    end
+end
+
+function GameService.Client:OpenLuckyWarrior(player, instance)
+    local plot = self.Server:GetPlotForPlayer(player)
+    if plot and instance.Parent:HasTag("CharacterSlot") then
+        local slot, idx = plot:GetSlotForInstance(instance.Parent)
+        local luckyRarity = instance.Name:match("(%w+) Lucky Warrior") or nil
+        if slot and slot:IsOwner(player) and instance:GetAttribute("IsLuckyWarrior") then
+            local originalMutation = instance:GetAttribute("Mutation") or "Base"
+            local name, mutation = self.Server:GetRandomCharacter(luckyRarity)
+            local charData = self.Server.Characters[name]
+            if charData and charData.Type ~= "LuckyWarrior" then
+                GameData.Effects.playEffect("LuckyWarriorOpen", instance.PrimaryPart.Position+Vector3.yAxis*1,2)
+                Knit.GetService("ProfileService"):Dispatch(player,{
+                    type = "ADD_CHARACTER", payload = {
+                        name = charData.Name, tier = 1, mutation = originalMutation=="Base" and mutation or originalMutation,
+                        permanent = false, slot = idx
+                    }
+                })
+            end
             return true
         end
     end

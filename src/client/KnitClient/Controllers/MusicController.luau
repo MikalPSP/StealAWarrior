@@ -24,10 +24,28 @@ local MusicController = Knit.CreateController({
 
     MusicList = {
         Normal = {
-            ["Zenhiser - TRANCEAFTERBURN"] = "rbxassetid://73731605864817",
-            ["Zenhiser - SKYDANCER"] = "rbxassetid://132688754697351",
-            ["Zenhiser - MAJESTIC"] = "rbxassetid://124400669675204"
+            --["Zenhiser - TRANCEAFTERBURN"] = "rbxassetid://73731605864817",
+            --["Zenhiser - SKYDANCER"] = "rbxassetid://132688754697351",
+            --["Zenhiser - MAJESTIC"] = "rbxassetid://124400669675204",
+            ["Fury of the Northmen"] = "rbxassetid://91284201329036",
+            ["Voodoo Warrior"] = "rbxassetid://9046952451",
+            ["The Warrior King's Lament"] = "rbxassetid://92188346907148",
+            ["La Cumbia Warrior"] = "rbxassetid://97152892719906",
+            ["Odin's Oath"] = "rbxassetid://130800347561846",
+            ["Warrior's Honor"] = "rbxassetid://139658293130549",
+
+
+
         },
+
+        EventBased = {
+            --Galaxy Maybe?
+            ["Clair De Lune"] = "rbxassetid://1838457617",
+
+            -- Maybe For Volcanic Event?
+            ["Volcanoes On Mars"] = "rbxassetid://9045937563",
+            ["Battle of the Warriors"] = "rbxassetid://1838685303",
+        }
     }
 })
 

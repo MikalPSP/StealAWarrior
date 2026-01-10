@@ -26,17 +26,19 @@ local inventoryReducer = function(state, action)
     elseif action.type == "SET_COINS" and typeof(payload)=="number" then
         return Dictionary.set(state,"Coins",math.max(payload,0))
     elseif action.type == "ADD_CHARACTER" then
-        local slot = Array.findWhere(state.Characters,function(v) return v == "Empty" end)
+        local slot = payload.slot or Array.findWhere(state.Characters,function(v) return v == "Empty" end)
         local mutation = payload.mutation or "Base"
 
-        if slot then
+        if typeof(slot)=="number" and state.Characters[slot] then
             return Dictionary.merge(state,{
                 Characters = Array.set(state.Characters,slot,{
                     Name = payload.name,
                     Mutation = mutation,
                     Tier = payload.tier or 1,
                     Reward = 0,
-                    OfflineReward = 0
+                    Permanent = payload.permanent or false,
+                    OfflineReward = 0,
+                    IsLuckyWarrior = payload.charType == "LuckyWarrior",
                 }),
                 Collection = Dictionary.merge(state.Collection,{
                     [payload.name] = Dictionary.update(state.Collection[payload.name] or {},mutation,function(old)
@@ -136,7 +138,11 @@ local inventoryReducer = function(state, action)
         })
     elseif action.type == "CLEAR_CHARACTERS" then
         return Dictionary.merge(state,{
-            Characters = Array.map(state.Characters,function() return "Empty" end)
+            Characters = Array.map(state.Characters,function(v)
+                if v~="Empty" and (payload.excludePermanent and v.Permanent) then
+                    return v
+                else return "Empty" end
+            end)
         })
     elseif action.type == "ADD_FLOOR" then
         return Dictionary.merge(state,{
@@ -180,7 +186,7 @@ local statusReducer = function(state,action)
         end)
     elseif action.type == "ADD_SPINS" then
         return Dictionary.update(state,"Spins",function(old)
-            return math.max(old + math.min(1,tonumber(payload) or 0))
+            return math.max(old + math.max(1,tonumber(payload) or 0))
         end)
     elseif action.type == "USE_SPINS" then
         return Dictionary.update(state,"Spins",function(old)

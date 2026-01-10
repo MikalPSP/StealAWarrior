@@ -161,13 +161,17 @@ function Plot:LoadCharacters(characters: {Name: string})
                if modelTemplate and not (slot.CurrentModel and slot.CurrentModel.Name == modelTemplate.Name) then
                     slot:AttachCharacter(modelTemplate, charData.Mutation)
                end
+               slot.IsStealable = not charData.Permanent
                slot:SetAmount(charData.Reward, charData.OfflineReward)
                if slot.CurrentModel then
                     slot.CurrentModel:SetAttribute("Tier",charData.Tier)
+                    slot.CurrentModel:SetAttribute("IsStealable",not charData.Permanent)
+                    slot.CurrentModel:SetAttribute("IsLuckyWarrior",charData.IsLuckyWarrior or nil)
                end
           else
                slot:AttachCharacter(nil)
                slot:SetAmount(0,0)
+               slot.IsStealable = false
           end
      end
 end
@@ -195,7 +199,6 @@ end
 function Plot:Reset()
      self.BackupModel.Parent = self.Instance.Parent
      self.Instance:Destroy()
-     self:UnlockGate()
 end
 
 function Plot:IsOwner(player)

@@ -75,6 +75,41 @@ local Service = Knit.CreateService({
 			ProductType = "Boost",
 		},
 
+		[3504118298] = {
+			Name = "1 Spin",
+			Icon = "rbxassetid://125763030257805",
+			Description = "Awards 1 Wheel Spin",
+			ProductType = "Spin",
+			Callback = { type = "ADD_SPINS", payload = 1 }
+		},
+
+		[3504118590] = {
+			Name = "3 Spins",
+			Icon = "rbxassetid://125763030257805",
+			Description = "Awards 3 Wheel Spins",
+			ProductType = "Spin",
+			Callback = { type = "ADD_SPINS", payload = 3 }
+		},
+
+		[3508235902] = {
+			Name = "Rare Lucky Warrior",
+			Icon = "rbxassetid://0",
+			Description = "Awards A Lucky Warrior Character",
+			ProductType = "LuckyWarrior",
+		},
+		[3508236534] = {
+			Name = "Legendary Lucky Warrior",
+			Icon = "rbxassetid://0",
+			Description = "Awards A Lucky Warrior Character",
+			ProductType = "LuckyWarrior",
+		},
+		[3508236839] = {
+			Name = "Mythic Lucky Warrior",
+			Icon = "rbxassetid://0",
+			Description = "Awards A Lucky Warrior Character",
+			ProductType = "LuckyWarrior",
+		}
+
 
 	},
 	UGCItems = {}
@@ -203,7 +238,9 @@ function Service:GrantProduct(player, productId, receiptInfo)
 			if callback.type == "ADD_COINS" then
 				Knit.GetService("ProfileService"):Dispatch(player, Sift.Dictionary.merge(callback,{
 					logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.IAP.Name }
-				}))
+				}))	
+				self.Server:SendNotification(player, string.format("+%s COIN$ Rewarded",GameData.Utils.formatNumber(callback.payload)), Color3.fromRGB(253, 216, 53))
+
 			else
 				Knit.GetService("ProfileService"):Dispatch(player, callback)
 			end
@@ -285,11 +322,9 @@ function Service:KnitStart()
 						metaData.MetaTags.TotalCurrencySpent = (totalSpent or 0) + receiptInfo.CurrencySpent
 
 						local activeRequest = self.Client.ActiveGiftRequest:GetFor(player)
+						local productName = self:GetProductName(receiptInfo.ProductId)
 						if activeRequest and activeRequest.ProductId == receiptInfo.ProductId and (activeRequest.TargetPlayer and activeRequest.TargetPlayer:IsA("Player")) then
 							self:GrantProduct(activeRequest.TargetPlayer, receiptInfo.ProductId, receiptInfo)
-
-							local productName = self:GetProductName(receiptInfo.ProductId)
-
 							Knit.GetService("GameService"):SendNotification(activeRequest.TargetPlayer,
 								`Successfully gifted {productName} to {player.Name}!`
 							)
@@ -298,6 +333,7 @@ function Service:KnitStart()
 							self:GrantProduct(player, receiptInfo.ProductId, receiptInfo)
 						end
 					end
+
 
 					-- Waiting until the purchase is confirmed to be saved:
 					local result = nil
@@ -400,6 +436,7 @@ function Service.Client:PromptGift(player, targetPlayer, productId)
 	end
 
 	local passName = self.Server:GetGamePassName(productId)
+	local product = self.Server.Products[productId]
 	if passName then
 		local giftProductId = self.Server:GetProductId(passName)
 		if typeof(giftProductId) ~= "number" then
@@ -414,6 +451,13 @@ function Service.Client:PromptGift(player, targetPlayer, productId)
 		productId = giftProductId
 	elseif not self.Server.Products[productId] then
 		return false, "Invalid ProductId"
+	elseif self.Server.Products[productId].ProductType == "LuckyWarrior" then
+		local hasEmptySlot = Knit.GetService("GameService"):HasEmptySlot(targetPlayer)
+		if not hasEmptySlot then
+			Knit.GetService("GameService")
+				:SendNotification(player, `{targetPlayer.Name} has no empty character slots!`, "Fail", 5)
+			return false, "No Empty Slot"
+		end
 	end
 
 	self.Server.Client.ActiveGiftRequest:SetFor(player, {
@@ -422,8 +466,27 @@ function Service.Client:PromptGift(player, targetPlayer, productId)
 	})
 
 	MarketplaceService:PromptProductPurchase(player, productId)
-
 	return true
 end
+
+function Service.Client:PromptProduct(player, productId)
+	local product = self.Server.Products[productId]
+	if not product then
+		return false, "Invalid ProductId"
+	end
+
+	if product.ProductType == "LuckyWarrior" then
+		local hasEmptySlot = Knit.GetService("GameService"):HasEmptySlot(player)
+		if not hasEmptySlot then
+			Knit.GetService("GameService")
+				:SendNotification(player, "You have no empty character slots!", "Fail", 5)
+			return false, "No Empty Slot"
+		end
+	end
+
+	MarketplaceService:PromptProductPurchase(player, productId)
+	return true
+end
+
 
 return Service

@@ -21,6 +21,7 @@ function CharacterSlot:Construct()
     self.Slot = self.Instance:FindFirstChild("Slot")
     self.IsStolen = false
     self.IsMoving = false
+    self.IsStealable = true
     self.CurrentAmount = 0
     self.OfflineAmount = 0
     self.OnCollected = Signal.new()
@@ -140,6 +141,11 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
             for _,x in eff:GetDescendants() do
                 if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
             end
+
+            local mainBone = characterModel.Name:find("Lucky Warrior$") and characterModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
+            if mainBone then
+                for _,x in eff:GetChildren() do x.Parent = mainBone end
+            end
             characterModel:SetAttribute("Mutation",mutation)
         end
 
@@ -172,6 +178,10 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
         self.CollectButton:SetEnabled(false)
     end
     self:SetStolen(false)
+end
+
+function CharacterSlot:Animate()
+
 end
 
 function CharacterSlot:SetStolen(active)

@@ -91,4 +91,50 @@ function Effects.lightningStrike(position)
     return effect
 end
 
+function Effects.playEffect(templateName: string, position, scale)
+    local EffectsFolder = ServerStorage:WaitForChild("GameAssets"):FindFirstChild("Effects")
+
+    local template = EffectsFolder:FindFirstChild(templateName)
+    if not template or not template:IsA("BasePart") or typeof(position)~="Vector3" then return end
+    local effect = template:Clone()
+    effect.CFrame = CFrame.new(position)
+    effect.CanCollide = false
+    effect.Anchored = true
+    effect.Transparency = 1
+
+    if typeof(scale)=="number" and scale>0 then
+        local model = Instance.new("Model")
+        effect.Parent = model
+        model:ScaleTo(scale)
+        effect.Parent = workspace.Terrain
+        model:Destroy()
+    else
+        effect.Parent = workspace.Terrain
+    end
+
+    local lingerTime = 1
+    for _,x in effect:GetDescendants() do
+        if x:IsA("ParticleEmitter") then
+            x.Enabled = false
+            x:AddTag("VFX")
+            local emitDelay = x:GetAttribute("EmitDelay")
+            local emitCount = math.max(1,tonumber(x:GetAttribute("EmitCount")) or x.Rate)
+            if typeof(emitDelay)=="number" and emitDelay>0 then
+                task.delay(emitDelay,function() x:Emit(emitCount) end)
+                lingerTime = math.max(lingerTime,emitDelay+x.Lifetime.Max)
+            else
+                x:Emit(emitCount)
+                lingerTime = math.max(lingerTime,x.Lifetime.Max)
+            end
+        elseif x:IsA("Sound") then
+            x:Play()
+            lingerTime = math.max(lingerTime,x.TimeLength)
+        end
+    end
+
+    Debris:AddItem(effect,lingerTime)
+
+    return effect
+end
+
 return Effects
