@@ -37,8 +37,6 @@ Knit.OnStart():andThen(function()
                     humanoid:SetAttribute("Ragdoll",true)
                     task.delay(2,function() humanoid:SetAttribute("Ragdoll",nil) end)
                 end
-            elseif msg == "start event" then
-                Knit.GetService("EventService"):StartEvent("Shocked")
             elseif msg == "print data" then
                 print(Knit.GetService("ProfileService"):GetData(plr))
             elseif msg == "add floor" then
@@ -75,6 +73,13 @@ Knit.OnStart():andThen(function()
                 local charName = msg:match("^gold (.+)")
                 if #charName>0 then
                     Knit.GetService("GameService"):SpawnCharacter(charName,"Gold")
+                end
+            elseif msg:match("^event .+$") then
+                local eventName = msg:match("^event (.+)")
+                if eventName == "end" then
+                    Knit.GetService("EventService"):EndEvent()
+                elseif #eventName>0 then
+                    Knit.GetService("EventService"):StartEvent(eventName)
                 end
             elseif msg=="serverluck" then
                 Knit.GetService("EventService"):SetServerLuck(2,60)

@@ -92,7 +92,7 @@ local Service = Knit.CreateService({
 		},
 
 		[3508235902] = {
-			Name = "Rare Lucky Warrior",
+			Name = "Epic Lucky Warrior",
 			Icon = "rbxassetid://0",
 			Description = "Awards A Lucky Warrior Character",
 			ProductType = "LuckyWarrior",

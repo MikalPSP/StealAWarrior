@@ -25,7 +25,7 @@ local EventService = Knit.CreateService({
     CurrentEvent = nil,
 
     Settings = {
-        EventWeights = { Shocked = 2, Galactic = 1, Volcanic = 4, Acid = 3 },
+        EventWeights = { Shocked = 3, Galactic = 1, Volcanic = 8, Acid = 6, Divine = 2 },
         EventInterval = 3600
     },
 
@@ -42,7 +42,7 @@ local EventService = Knit.CreateService({
             Description = "Warriors get transformed by deep space events!",
         },
 
-        ["Volcanic"] = {
+        ["Fire"] = {
             Duration = 300,
             MutationType = "Fire",
             Description = "Warriors are ignited with flames!",
@@ -55,10 +55,16 @@ local EventService = Knit.CreateService({
         },
 
         ["Gold"] = {
-            Duration = 180,
+            Duration = 300,
             MutationType = "Gold",
             Description = "All warriors turn to gold!"
-        }
+        },
+
+        ["Divine"] = {
+            Duration = 300,
+            MutationType = "Divine",
+            Description = "Warriors are blessed by the gods!"
+        },
     }
 })
 
@@ -150,7 +156,7 @@ function EventService:StartEvent(eventName)
                 local existing = workspace:FindFirstChild("EventVFX")
                 if existing then existing:Destroy() end
                 x:Clone().Parent = workspace
-            else
+            elseif x:IsA("Atmosphere") or x:IsA("Sky") or x:IsA("ColorCorrectionEffect") then
                 local existing = Lighting:FindFirstChildWhichIsA(x.ClassName)
                 if existing then existing:Destroy() end
                 x:Clone().Parent = Lighting
@@ -163,12 +169,14 @@ function EventService:StartEvent(eventName)
         Knit.GetService("GameService").Client.OnNotify:FireAll("Lightning Event Has Started!", Color3.fromRGB(0, 170, 255))
     elseif eventName == "Galactic" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Galactic Event Has Started!", Color3.fromRGB(170, 0, 255)) 
-    elseif eventName == "Volcanic" then
+    elseif eventName == "Fire" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Volcanic Event Has Started!", Color3.fromRGB(255, 85, 0))
     elseif eventName == "Acid" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Acidic Event Has Started!", Color3.fromRGB(0, 255, 0))  
     elseif eventName == "Gold" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Midas Touch Event Has Started!", Color3.fromRGB(255, 215, 0))
+    elseif eventName == "Divine" then
+        Knit.GetService("GameService").Client.OnNotify:FireAll("Divine Event Has Started!", Color3.fromRGB(255, 175, 100))
     end
 
     self.Client.OnEventChanged:FireAll(self.CurrentEvent)
@@ -178,12 +186,14 @@ function EventService:EndEvent()
 
     local lightingFolder = EventLightingFolder:FindFirstChild("Default")
     if lightingFolder then
+        local vfxFolder = workspace:FindFirstChild("EventVFX")
+        if vfxFolder then vfxFolder:Destroy() end
         for _,x in lightingFolder:GetChildren() do
             local existing = Lighting:FindFirstChildWhichIsA(x.ClassName)
             if existing then existing:Destroy() end
             x:Clone().Parent = Lighting
         end
-        Lighting.Brightness = 1
+        Lighting.Brightness = 4
     end
 
     Knit.GetService("GameService").Client.OnNotify:FireAll("The Event Has Ended!")

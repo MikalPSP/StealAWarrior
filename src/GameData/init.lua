@@ -11,6 +11,7 @@ GameData.Mutations = {
     Fire = 2,
     Acid = 3,
     Shocked = 4,
+    Divine = 5,
     Galaxy = 6,
     Rainbow = 10
 }

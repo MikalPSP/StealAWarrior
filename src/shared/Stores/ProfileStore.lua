@@ -46,7 +46,7 @@ local inventoryReducer = function(state, action)
                             TimesObtained = tonumber(old.TimesObtained or 0) + 1
                         })
                     end,function()
-                        return { IsNew = true, TimesObtained = 1 }
+                        return { IsNew = payload.charType ~= "LuckyWarrior", TimesObtained = 1 }
                     end)
                 }),
             })

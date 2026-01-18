@@ -77,7 +77,7 @@ local Data = {
     ["Richard the Lionheart"]  = { Index = 14, Rarity = "Legendary", Era = "Medieval",    Profit = 1500,  Price = 350000 },
     ["King Arthur"]            = { Index = 15, Rarity = "Legendary", Era = "Medieval",    Profit = 1700,  Price = 375000 },
 
-    -- Mythic (8)
+    -- Mythic (13)
     ["Blackbeard"]             = { Index = 1,  Rarity = "Mythic", Era = "Medieval",        Profit = 1900,  Price = 350000 },
     ["William Wallace"]        = { Index = 2,  Rarity = "Mythic", Era = "Medieval",        Profit = 2000,  Price = 400000 },
     ["Achilles"]               = { Index = 3,  Rarity = "Mythic", Era = "Ancient",         Profit = 2100,  Price = 450000 },
@@ -86,9 +86,13 @@ local Data = {
     ["Athena"]                 = { Index = 6,  Rarity = "Mythic", Era = "Ancient",         Profit = 7500,  Price = 2_500_000 },
     ["Alexander the Great"]    = { Index = 7,  Rarity = "Mythic", Era = "Medieval",        Profit = 8000,  Price = 3_000_000 },
     ["Genghis Khan"]           = { Index = 8,  Rarity = "Mythic", Era = "Medieval",        Profit = 9500,  Price = 4_000_000 },
-    --["Placeholder Hero 5"]   = { Index = 9,  Rarity = "Mythic", Era = "???",             Profit = 12000,  Price = 4_200_000 },
-    --["Placeholder Hero 6"]   = { Index = 10, Rarity = "Mythic", Era = "???",            Profit = 13000,  Price = 4_400_000 },
-    --["Placeholder Hero 7"]   = { Index = 11, Rarity = "Mythic", Era = "???",            Profit = 16000,  Price = 4_800_000 },
+    ["Polyphemus"]             = { Index = 9,  Rarity = "Mythic", Era = "Ancient",         Profit = 12000,  Price = 4_200_000 },
+    ["Kratos"]                 = { Index = 10, Rarity = "Mythic", Era = "Ancient",         Profit = 13000,  Price = 4_400_000 },
+    ["Poseidon"]               = { Index = 11, Rarity = "Mythic", Era = "Ancient",         Profit = 16000,  Price = 4_800_000 },
+    ["Hades"]                  = { Index = 12, Rarity = "Mythic", Era = "Ancient",         Profit = 18000,  Price = 5_000_000 },
+    ["Zeus"]                   = { Index = 13, Rarity = "Mythic", Era = "Ancient",         Profit = 20000,  Price = 5_500_000 },
+    --["Placeholder Warrior 1"]  = { Index = 14, Rarity = "Mythic", Era = "???",             Profit = 22000,  Price = 6_000_000 },
+    --["Placeholder Warrior 2"]  = { Index = 15, Rarity = "Mythic", Era = "???",             Profit = 24000,  Price = 6_500_000 },
 
     -- Secret (6)
     ["Sabertoothy Chomperino"] = { Index = 1,  Rarity = "Secret", Era = "Prehistoric",     Profit = 6000,  Price = 1_000_000 },
@@ -100,10 +104,10 @@ local Data = {
     ["The Emperor"]            = { Index = 7,  Rarity = "Secret", Era = "Ancient",         Profit = 50000, Price = 25_000_000, WeightFactor = 0 },
 
     ["Rare Lucky Warrior"]      = { Index = 1, Rarity = "Rare",      Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
-    ["Legendary Lucky Warrior"] = { Index = 2, Rarity = "Legendary", Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
-    ["Mythic Lucky Warrior"]    = { Index = 3, Rarity = "Mythic",    Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0},
-    ["Secret Lucky Warrior"]    = { Index = 4, Rarity = "Secret",    Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
-
+    ["Epic Lucky Warrior"]      = { Index = 2, Rarity = "Epic",      Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
+    ["Legendary Lucky Warrior"] = { Index = 3, Rarity = "Legendary", Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
+    ["Mythic Lucky Warrior"]    = { Index = 4, Rarity = "Mythic",    Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
+    ["Secret Lucky Warrior"]    = { Index = 5, Rarity = "Secret",    Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
 }
 
 return Data

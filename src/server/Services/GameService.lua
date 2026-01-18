@@ -43,9 +43,9 @@ local GameService = Knit.CreateService({
             Epic = 15,
             Legendary = 2.5,
             Mythic = 1,
-            Secret = .5
+            Secret = .25
         },
-        MutationWeights = { Base = 85, Gold = 10, Diamond = 5 },
+        MutationWeights = { Base = 85, Gold = 25, Diamond = 10, Rainbow = 1 },
         GuaranteeTimes = { Legendary = 300, Mythic = 900 },
         OfflineProfitFactor = 0.1,
     },
@@ -72,7 +72,10 @@ function GameService:KnitStart()
             instance.Name = name
             instance.Parent = ServerStorage.GameAssets.Characters
             warn("No character instance found for",name)
+        elseif instance.PrimaryPart then
+            instance.PrimaryPart.Anchored = true
         end
+
         for k,v in charData do instance:SetAttribute(k,v) end
 
         self:BuildViewportItem(instance)
@@ -595,7 +598,6 @@ function GameService:SpawnCharacter(name, mutation)
 
         for _,x in charModel:GetDescendants() do
             if x:IsA("BasePart") then
-                x.AssemblyLinearVelocity = Vector3.zero
                 x.CollisionGroup = "Characters"
             elseif x:IsA("Sound") then
                 x.SoundGroup = SoundService:FindFirstChild("SFX")
@@ -642,12 +644,13 @@ function GameService:SpawnCharacter(name, mutation)
         charModel:AddTag("Character")
         charModel.Parent = workspace:FindFirstChild("SpawnedCharacters")
 
+        task.delay(1,function() charModel.PrimaryPart.Anchored = false end)
+
         local rootPart = nil
         if charHumanoid then
             charHumanoid.WalkSpeed = 12
             charHumanoid.BreakJointsOnDeath = false
             charHumanoid:Move(Vector3.xAxis)
-
             rootPart = charHumanoid.RootPart
         else
             local controller = charModel:FindFirstChildWhichIsA("ControllerManager")
@@ -974,6 +977,7 @@ function GameService:MoveCharacter(player, slotIdx, is_placing)
                 if x:IsA("Script") then x:Destroy()
                 elseif x:IsA("BasePart") then
                     x.Massless, x.CanCollide = true, false
+                    x.Anchored = false
 
                     local noc = Instance.new("NoCollisionConstraint")
                     noc.Part0 = x
