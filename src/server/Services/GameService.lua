@@ -43,7 +43,8 @@ local GameService = Knit.CreateService({
             Epic = 15,
             Legendary = 2.5,
             Mythic = 1,
-            Secret = .25
+            Secret = .25,
+            OG = .1
         },
         MutationWeights = { Base = 85, Gold = 25, Diamond = 10, Rainbow = 1 },
         GuaranteeTimes = { Legendary = 300, Mythic = 900 },
@@ -84,23 +85,6 @@ function GameService:KnitStart()
             Instance = instance
         }), instance.Name
     end)
-
-    --[[
-    self.Characters = Sift.Dictionary.map(ServerStorage.GameAssets:FindFirstChild("Characters"):GetChildren(),function(instance)
-        local charData = GameData.CharacterData[instance.Name]
-        if instance:IsA("Model") and charData then
-            for k,v in charData do instance:SetAttribute(k,v) end
-
-            return Sift.Dictionary.merge(charData,{
-                Name = instance.Name,
-                Instance = instance
-            }), instance.Name
-        end
-    end)
-    --]]
-
-
-
 
     local function updateLeaderStats(player, data)
         local folder = player:FindFirstChild("leaderstats")
@@ -395,6 +379,12 @@ function GameService:KnitStart()
                     profileService:Dispatch(plr, { type = "SET_INCOME_RATE", payload = totalProfit })
                     self.Client.IncomeRate:SetFor(plr,totalProfit)
                 end
+
+                local spinTime = profileService:GetStatus(plr,"NextSpinTime") or 0
+                if spinTime and os.time() >= spinTime then
+                    profileService:Dispatch(plr,{ type = "CLAIM_SPIN" })
+                    self:SendNotification(plr, "You have received a free spin!")
+                end
             end
         end
     end)
@@ -452,8 +442,7 @@ function GameService:BuildViewportItem(instance)
 		do
 			for _, x in ipairs(instance:GetChildren()) do
 				if x:IsA("Model") and (x:FindFirstChildWhichIsA("Attachment", true) or x.Name:find("Weapon")) then
-					model = x
-					break
+					model = x break
 				end
 			end
 			if not model then
@@ -468,9 +457,7 @@ function GameService:BuildViewportItem(instance)
 				local p = handle:Clone()
 				p.Parent = model
 				model.PrimaryPart = p
-			else
-				return
-			end
+            else return end
 		end
 
 		template = model:Clone()
@@ -584,9 +571,9 @@ end
 function GameService:SpawnCharacter(name, mutation)
     local charData = self.Characters[name]
     if charData and charData.Instance then
-        if charData.Rarity == "Secret" or charData.Type == "LuckyWarrior" then
+        if charData.Rarity == "OG" or charData.Type == "LuckyWarrior" then
             self.Client.OnNotify:FireAll(`{charData.Name} Spawned!`,"Rainbow")
-        elseif table.find({"Epic","Legendary","Mythic"},charData.Rarity) then
+        elseif table.find({"Epic","Legendary","Mythic","Secret"},charData.Rarity) then
             self.Client.OnNotify:FireAll(`{charData.Rarity} Spawned!`,RarityColors[charData.Rarity])
         end
 
@@ -737,10 +724,9 @@ function GameService:SpawnCharacter(name, mutation)
                 sfx.SoundId = recruitSounds[charData.Rarity == "Mythic" and "Brainrot" or "Normal"]
                 sfx.Parent = rootPart
                 sfx.RollOffMaxDistance = 100
-                sfx.Volume = 0.7
+                sfx.Volume = 0.5
+                sfx.SoundGroup = SoundService:FindFirstChild("SFX")
                 sfx:Play()
-                task.delay(math.max(5,sfx.TimeLength+1),function() sfx:Destroy() end)
-
 
                 for _,conn in connections do
                     conn:Disconnect()
@@ -1090,7 +1076,8 @@ function GameService.Client:GrantSpinReward(player, rewardType)
         eventService:SetServerLuck(math.max(2,eventService.CurrentLevel or 1),15*60)
 
     elseif rewardType == "Character" then
-
+        local charData = self.Server.Characters["Samurino Craneo"]
+        self.Server:GiveCharacter(player, charData)
     elseif rewardType == "Event" then
         Knit.GetService("EventService"):StartEvent("Shocked")
 

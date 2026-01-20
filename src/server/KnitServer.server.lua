@@ -86,13 +86,13 @@ Knit.OnStart():andThen(function()
             elseif msg:match("^spawn.+$") then
                 local mutation, charName = msg:match("^spawn(%w-) (.+)")
 
-                if table.find({"gold","diamond","acid","galaxy","fire","rainbow","shocked"},mutation:lower()) then
+                if table.find({"gold","diamond","acid","galaxy","fire","rainbow","shocked","divine"},mutation:lower()) then
                     mutation = mutation:sub(1,1):upper()..mutation:sub(2):lower()
                 else mutation = nil end
 
-                if table.find({"rare","epic","mythic","legendary","secret"},charName) then
+                if table.find({"rare","epic","mythic","legendary","secret"},charName:lower()) then
                     local names = Sift.Dictionary.keys(Sift.Dictionary.filter(Knit.GetService("GameService").Characters,function(v)
-                        return v.Rarity:lower()==charName:lower() and not v.Type=="LuckyWarrior"
+                        return v.Rarity:lower()==charName:lower() and v.Type~="LuckyWarrior"
                     end))
                     Knit.GetService("GameService"):SpawnCharacter(names[math.random(1,#names)],mutation)
                 elseif charName:lower() == "luckywarrior" then

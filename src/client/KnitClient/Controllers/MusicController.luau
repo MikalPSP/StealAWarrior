@@ -149,20 +149,15 @@ function MusicController:KnitStart()
         if #list>0 then
             task.spawn(function()
                 for _,s in shuffledList do
-                    if s.IsPlaying then
-                        s:Stop()
-                    end
+                    if s.IsPlaying then s:Stop() end
                 end
     
                 while true do
                     repeat task.wait() until self.CurrentPlayingGroup == group
 
                     for _,s in list do
-                        if s.IsPlaying then
-                            s:Stop()
-                        end
-                        s.Volume = 1
-                        s:Play()
+                        if s.IsPlaying then s:Stop() end
+                        s.Volume = 1 s:Play()
 
                         self.ActiveTrack = s
                         repeat task.wait() until (not s.IsPlaying)

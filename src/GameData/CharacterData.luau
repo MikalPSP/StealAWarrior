@@ -100,8 +100,12 @@ local Data = {
     ["Cerberino Vulcano"]      = { Index = 3,  Rarity = "Secret", Era = "Ancient",         Profit = 10000, Price = 3_500_000 },
     ["Regalroar Majestico"]    = { Index = 4,  Rarity = "Secret", Era = "Medieval",        Profit = 15000, Price = 5_000_000 },
     ["Samurino Craneo"]        = { Index = 5,  Rarity = "Secret", Era = "Medieval",        Profit = 20000, Price = 7_500_000 },
-    --["Napolini Cannonini"]     = { Index = 6,  Rarity = "Secret", Era = "Medieval",        Profit = 25000, Price = 10_000_000, WeightFactor = 0 },
-    ["The Emperor"]            = { Index = 7,  Rarity = "Secret", Era = "Ancient",         Profit = 50000, Price = 25_000_000, WeightFactor = 0 },
+    --["Napolini Cannonini"]     = { Index = 6,  Rarity = "Secret", Era = "Early Modern",        Profit = 25000, Price = 10_000_000, WeightFactor = 0 },
+    
+    
+    
+    
+    ["The Emperor"]            = { Index = 1,  Rarity = "OG", Era = "Ancient",         Profit = 50000, Price = 25_000_000, WeightFactor = 0 },
 
     ["Rare Lucky Warrior"]      = { Index = 1, Rarity = "Rare",      Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
     ["Epic Lucky Warrior"]      = { Index = 2, Rarity = "Epic",      Type = "LuckyWarrior",   Profit = 0, Price = 0, WeightFactor = 0 },
