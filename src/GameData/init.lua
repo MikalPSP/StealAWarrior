@@ -20,7 +20,7 @@ GameData.SpinData = {
     { Reward = "Event",      Name = "Event", Weight = 0.5, Icon = "rbxassetid://112824149242488", Color = Color3.fromRGB(0, 255, 255) },
     { Reward = "ServerLuck", Name = "2x Server Luck\n(15m)", Weight = 2, Icon = "rbxassetid://125659671905342", Color = Color3.fromRGB(0,255,0) },
     { Reward = "Coins_25K",  Name = "$25K", Weight = 55,  Icon = "rbxassetid://118183690055706", Color = Color3.fromRGB(255,255,0) },
-    { Reward = "Character",  Name = "???", Weight = 1.0, Icon = "", Color = Color3.fromRGB(255, 0, 255) },
+    { Reward = "Character",  Name = "Raptorino", Weight = 1.0, Icon = "rbxassetid://140327277396024", Color = Color3.fromRGB(255, 0, 255) },
     { Reward = "Coins_100K", Name = "$100K", Weight = 34, Icon = "rbxassetid://86195196207111", Color = Color3.fromRGB(255,255,0) },
     { Reward = "Coins_1M",   Name = "$1M", Weight = 7.5, Icon = "rbxassetid://122774277931768", Color = Color3.fromRGB(255, 128, 0) },
 }

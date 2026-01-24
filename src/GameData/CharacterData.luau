@@ -33,7 +33,7 @@ local Data = {
 
 
 
-    -- Rare (9)
+    -- Rare (10)
     ["Skull Hunter"]           = { Index = 1,  Rarity = "Rare",      Era = "Prehistoric", Profit = 15,    Price = 2000 },
     ["Persian Immortal"]       = { Index = 2,  Rarity = "Rare",      Era = "Medieval",    Profit = 20,    Price = 3000 },
     ["Viking Warrior"]         = { Index = 3,  Rarity = "Rare",      Era = "Ancient",     Profit = 30,    Price = 4000 },
@@ -42,12 +42,13 @@ local Data = {
     ["Gallic Warrior"]         = { Index = 6,  Rarity = "Rare",      Era = "Ancient",     Profit = 50,    Price = 6500 },
     ["Germanic Warrior"]       = { Index = 7,  Rarity = "Rare",      Era = "Ancient",     Profit = 55,    Price = 7500 },
     ["Carthaginian Warrior"]   = { Index = 8,  Rarity = "Rare",      Era = "Ancient",     Profit = 65,    Price = 9000 },
-    ["Viking Berserker"]       = { Index = 9,  Rarity = "Rare",      Era = "Medieval",     Profit = 70,    Price = 9500 },
+    ["Viking Berserker"]       = { Index = 9,  Rarity = "Rare",      Era = "Medieval",    Profit = 70,    Price = 9500 },
+    ["Chinese Warrior"]        = { Index = 10, Rarity = "Rare",      Era = "Medieval",    Profit = 75,    Price = 10000 },
 
 
 
     -- Epic (12)
-    ["Dinosaur"]               = { Index = 1,  Rarity = "Epic",      Era = "Prehistoric", Profit = 75,    Price = 10000 },
+    ["Dinosaur"]               = { Index = 1,  Rarity = "Epic",      Era = "Prehistoric", Profit = 85,    Price = 10000 },
     ["Praetorian Guard"]       = { Index = 2,  Rarity = "Epic",      Era = "Ancient",     Profit = 100,   Price = 15000 },
     ["Roman Centurion"]        = { Index = 3,  Rarity = "Epic",      Era = "Ancient",     Profit = 115,   Price = 17500 },
     ["Byzantine Warrior"]      = { Index = 4,  Rarity = "Epic",      Era = "Ancient",     Profit = 125,   Price = 20000 },
@@ -78,29 +79,28 @@ local Data = {
     ["King Arthur"]            = { Index = 15, Rarity = "Legendary", Era = "Medieval",    Profit = 1700,  Price = 375000 },
 
     -- Mythic (13)
-    ["Blackbeard"]             = { Index = 1,  Rarity = "Mythic", Era = "Medieval",        Profit = 1900,  Price = 350000 },
-    ["William Wallace"]        = { Index = 2,  Rarity = "Mythic", Era = "Medieval",        Profit = 2000,  Price = 400000 },
-    ["Achilles"]               = { Index = 3,  Rarity = "Mythic", Era = "Ancient",         Profit = 2100,  Price = 450000 },
-    ["Artemis"]                = { Index = 4,  Rarity = "Mythic", Era = "Ancient",         Profit = 2500,  Price = 500000 },
-    ["Ares"]                   = { Index = 5,  Rarity = "Mythic", Era = "Ancient",         Profit = 5000,  Price = 1_000_000 },
-    ["Athena"]                 = { Index = 6,  Rarity = "Mythic", Era = "Ancient",         Profit = 7500,  Price = 2_500_000 },
-    ["Alexander the Great"]    = { Index = 7,  Rarity = "Mythic", Era = "Medieval",        Profit = 8000,  Price = 3_000_000 },
-    ["Genghis Khan"]           = { Index = 8,  Rarity = "Mythic", Era = "Medieval",        Profit = 9500,  Price = 4_000_000 },
-    ["Polyphemus"]             = { Index = 9,  Rarity = "Mythic", Era = "Ancient",         Profit = 12000,  Price = 4_200_000 },
-    ["Kratos"]                 = { Index = 10, Rarity = "Mythic", Era = "Ancient",         Profit = 13000,  Price = 4_400_000 },
-    ["Poseidon"]               = { Index = 11, Rarity = "Mythic", Era = "Ancient",         Profit = 16000,  Price = 4_800_000 },
-    ["Hades"]                  = { Index = 12, Rarity = "Mythic", Era = "Ancient",         Profit = 18000,  Price = 5_000_000 },
-    ["Zeus"]                   = { Index = 13, Rarity = "Mythic", Era = "Ancient",         Profit = 20000,  Price = 5_500_000 },
-    --["Placeholder Warrior 1"]  = { Index = 14, Rarity = "Mythic", Era = "???",             Profit = 22000,  Price = 6_000_000 },
-    --["Placeholder Warrior 2"]  = { Index = 15, Rarity = "Mythic", Era = "???",             Profit = 24000,  Price = 6_500_000 },
+    ["Achilles"]               = { Index = 1,  Rarity = "Mythic", Era = "Ancient",         Profit = 1900,  Price = 350000 }, 
+    ["Artemis"]                = { Index = 2,  Rarity = "Mythic", Era = "Ancient",         Profit = 2000,  Price = 400000 },
+    ["Ares"]                   = { Index = 3,  Rarity = "Mythic", Era = "Ancient",         Profit = 2100,  Price = 450000 },
+    ["Athena"]                 = { Index = 4,  Rarity = "Mythic", Era = "Ancient",         Profit = 2500,  Price = 500000 },
+    ["Blackbeard"]             = { Index = 5,  Rarity = "Mythic", Era = "Medieval",        Profit = 3000,  Price = 600000 },
+    ["William Wallace"]        = { Index = 6,  Rarity = "Mythic", Era = "Medieval",        Profit = 3500,  Price = 700000 },
+    ["Alexander the Great"]    = { Index = 7,  Rarity = "Mythic", Era = "Medieval",        Profit = 4000,  Price = 800000 },
+    ["Genghis Khan"]           = { Index = 8,  Rarity = "Mythic", Era = "Medieval",        Profit = 4500,  Price = 900000 },
+    ["Polyphemus"]             = { Index = 9,  Rarity = "Mythic", Era = "Ancient",         Profit = 5000,  Price = 1_000_000 },
+    ["Kratos"]                 = { Index = 10, Rarity = "Mythic", Era = "Ancient",         Profit = 6000,  Price = 2_000_000 },
+    ["Poseidon"]               = { Index = 11, Rarity = "Mythic", Era = "Ancient",         Profit = 7000,  Price = 3_000_000 },
+    ["Hades"]                  = { Index = 12, Rarity = "Mythic", Era = "Ancient",         Profit = 8000,  Price = 4_000_000 },
+    ["Zeus"]                   = { Index = 13, Rarity = "Mythic", Era = "Ancient",         Profit = 9000,  Price = 5_000_000 },
 
     -- Secret (6)
-    ["Sabertoothy Chomperino"] = { Index = 1,  Rarity = "Secret", Era = "Prehistoric",     Profit = 6000,  Price = 1_000_000 },
-    ["Chariotus Spoketron"]    = { Index = 2,  Rarity = "Secret", Era = "Ancient",         Profit = 8000,  Price = 2_000_000 },
-    ["Cerberino Vulcano"]      = { Index = 3,  Rarity = "Secret", Era = "Ancient",         Profit = 10000, Price = 3_500_000 },
-    ["Regalroar Majestico"]    = { Index = 4,  Rarity = "Secret", Era = "Medieval",        Profit = 15000, Price = 5_000_000 },
-    ["Samurino Craneo"]        = { Index = 5,  Rarity = "Secret", Era = "Medieval",        Profit = 20000, Price = 7_500_000 },
-    --["Napolini Cannonini"]     = { Index = 6,  Rarity = "Secret", Era = "Early Modern",        Profit = 25000, Price = 10_000_000, WeightFactor = 0 },
+    ["Skeletino Raptorino"]    = { Index = 1,  Rarity = "Secret", Era = "Prehistoric",     Profit = 5000,  Price = 750000 },
+    ["Sabertoothy Chomperino"] = { Index = 2,  Rarity = "Secret", Era = "Prehistoric",     Profit = 6000,  Price = 1_000_000 },
+    ["Chariotus Spoketron"]    = { Index = 3,  Rarity = "Secret", Era = "Ancient",         Profit = 8000,  Price = 2_000_000 },
+    ["Cerberino Vulcano"]      = { Index = 4,  Rarity = "Secret", Era = "Ancient",         Profit = 10000, Price = 3_500_000 },
+    ["Regalroar Majestico"]    = { Index = 5,  Rarity = "Secret", Era = "Medieval",        Profit = 12500, Price = 5_000_000 },
+    ["Samurino Craneo"]        = { Index = 6,  Rarity = "Secret", Era = "Medieval",        Profit = 15000, Price = 7_500_000 },
+    --["Napolini Cannonini"]     = { Index = 7,  Rarity = "Secret", Era = "Early Modern",        Profit = 25000, Price = 10_000_000, WeightFactor = 0 },
     
     
     

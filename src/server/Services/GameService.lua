@@ -119,8 +119,21 @@ function GameService:KnitStart()
 
     local profileService = Knit.GetService("ProfileService")
     local economyService = Knit.GetService("EconomyService")
-    profileService.PlayerDataLoaded:Connect(function(player, data)
+
+
+    Players.PlayerAdded:Connect(function(player)
         local newPlot = self:GetAvailablePlot()
+        if newPlot then
+            newPlot:SetOwner(player)
+        else 
+            warn("No available plots for player:",player.Name)
+        end
+    end)
+
+    profileService.PlayerDataLoaded:Connect(function(player, data)
+        local newPlot = self:GetPlotForPlayer(player)
+        repeat task.wait(1) newPlot = self:GetPlotForPlayer(player) until newPlot
+
         local isVIP, isDouble = economyService:PlayerHasPass(player,"VIP"), economyService:PlayerHasPass(player,"2X Coins")
         local isGroup = player:IsInGroup(6124305)
         local multiplier = data.Statistics.IncomeMultiplier or 1
@@ -365,7 +378,7 @@ function GameService:KnitStart()
 
                             local profit = math.floor(baseProfit  * multiplier) -- * math.max(1,1+friendBoost))
 
-                            local curModel = plot and plot.Slots[i].CurrentModel or nil
+                            local curModel = (plot and plot.Slots[i]) and plot.Slots[i].CurrentModel or nil
                             if curModel then curModel:SetAttribute("Profit", profit) end
                             profileService:Dispatch(plr,{ type = "UPDATE_PROFIT", payload = {
                                 slot = i,
@@ -383,7 +396,7 @@ function GameService:KnitStart()
                 local spinTime = profileService:GetStatus(plr,"NextSpinTime") or 0
                 if spinTime and os.time() >= spinTime then
                     profileService:Dispatch(plr,{ type = "CLAIM_SPIN" })
-                    self:SendNotification(plr, "You have received a free spin!")
+                    if spinTime>0 then self:SendNotification(plr, "You have received a free spin!") end
                 end
             end
         end
@@ -822,6 +835,7 @@ function GameService:StealCharacter(player, plot, idx)
                 if x:IsA("Script") then x:Destroy()
                 elseif x:IsA("BasePart") then
                     x.Massless, x.CanCollide = true, false
+                    x.Anchored = false
 
                     local noc = Instance.new("NoCollisionConstraint")
                     noc.Part0 = x
@@ -1076,10 +1090,11 @@ function GameService.Client:GrantSpinReward(player, rewardType)
         eventService:SetServerLuck(math.max(2,eventService.CurrentLevel or 1),15*60)
 
     elseif rewardType == "Character" then
-        local charData = self.Server.Characters["Samurino Craneo"]
+        local charData = self.Server.Characters["Skeletino Raptorino"]
         self.Server:GiveCharacter(player, charData)
+        self.Server:SendNotification(player, string.format("You've been awarded \"%s\"",charData.Name), Color3.fromRGB(253, 216, 53))
     elseif rewardType == "Event" then
-        Knit.GetService("EventService"):StartEvent("Shocked")
+        Knit.GetService("EventService"):StartEvent("Fire")
 
     elseif typeof(coinRewards[rewardType])=="number" then
         local amount = coinRewards[rewardType]
@@ -1196,13 +1211,14 @@ function GameService.Client:OpenLuckyWarrior(player, instance)
         local luckyRarity = instance.Name:match("(%w+) Lucky Warrior") or nil
         if slot and slot:IsOwner(player) and instance:GetAttribute("IsLuckyWarrior") then
             local originalMutation = instance:GetAttribute("Mutation") or "Base"
+            local tier = instance:GetAttribute("Tier") or 1
             local name, mutation = self.Server:GetRandomCharacter(luckyRarity)
             local charData = self.Server.Characters[name]
             if charData and charData.Type ~= "LuckyWarrior" then
                 GameData.Effects.playEffect("LuckyWarriorOpen", instance.PrimaryPart.Position+Vector3.yAxis*1,2)
                 Knit.GetService("ProfileService"):Dispatch(player,{
                     type = "ADD_CHARACTER", payload = {
-                        name = charData.Name, tier = 1, mutation = originalMutation=="Base" and mutation or originalMutation,
+                        name = charData.Name, tier = tier, mutation = originalMutation=="Base" and mutation or originalMutation,
                         permanent = false, slot = idx
                     }
                 })

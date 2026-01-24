@@ -108,7 +108,17 @@ local Service = Knit.CreateService({
 			Icon = "rbxassetid://0",
 			Description = "Awards A Lucky Warrior Character",
 			ProductType = "LuckyWarrior",
-		}
+		},
+		[3519089886] = {
+			Name = "Limited Zeus",
+			Icon = "rbxassetid://0",
+			Description = "Gift a Game Pass to a friend!",
+			ProductType = "LimitedCharacter",
+			Callback = {
+				type = "ADD_CHARACTER",
+				payload = { name = "Zeus", mutation = "Divine", permanent = true }
+			}
+		},
 
 
 	},

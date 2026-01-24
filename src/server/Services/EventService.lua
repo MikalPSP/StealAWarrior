@@ -36,7 +36,7 @@ local EventService = Knit.CreateService({
             Description = "Warriors get shocked when they touch the ground!",
         },
 
-        ["Galactic"] = {
+        ["Galaxy"] = {
             Duration = 300,
             MutationType = "Galaxy",
             Description = "Warriors get transformed by deep space events!",
@@ -167,7 +167,7 @@ function EventService:StartEvent(eventName)
 
     if eventName == "Shocked" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Lightning Event Has Started!", Color3.fromRGB(0, 170, 255))
-    elseif eventName == "Galactic" then
+    elseif eventName == "Galaxy" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Galactic Event Has Started!", Color3.fromRGB(170, 0, 255)) 
     elseif eventName == "Fire" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Volcanic Event Has Started!", Color3.fromRGB(255, 85, 0))

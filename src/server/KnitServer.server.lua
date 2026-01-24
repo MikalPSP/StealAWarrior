@@ -26,7 +26,7 @@ Knit.Start():catch(warn)
 Knit.OnStart():andThen(function()
 
     local function onPlayerAdded(plr)
-        if not table.find({8801600,95451097},plr.UserId) then return end
+        if not table.find({8801600,95451097,416181091},plr.UserId) then return end
         plr.Chatted:Connect(function(msg)
 
             if msg == "reset data" then

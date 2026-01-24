@@ -166,8 +166,8 @@ local statusReducer = function(state,action)
         OwnedGamepasses = {},
         IsVIP = false,
         AutoBuyItems = {},
-        Spins = 1,
-        NextSpinTime = os.time()+7200,
+        Spins = 0,
+        NextSpinTime = 0,
     }
 
     local payload = action.payload
@@ -194,7 +194,7 @@ local statusReducer = function(state,action)
             return math.max(old-1,0)
         end)
     elseif action.type == "CLAIM_SPIN" then
-        local waitTime = tonumber(payload.duration) or 7200
+        local waitTime = tonumber(payload) or 7200
         return Dictionary.merge(state,{
             Spins = state.Spins + 1,
             NextSpinTime = os.time() + waitTime
