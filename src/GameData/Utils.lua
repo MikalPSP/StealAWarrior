@@ -48,6 +48,8 @@ function Utils.formatNumber(number: number): string
 	local suffixes = {"", "K", "M", "B", "T", "Qa", "Qi"} -- extend if needed
 	local i = 1
 
+	if number<=10000 then return Utils.addCommas(math.floor(number + 0.5)) end
+
 	while number >= 1000 and i < #suffixes do
 		number = number / 1000
 		i += 1

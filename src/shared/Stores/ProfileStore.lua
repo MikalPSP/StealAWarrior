@@ -14,6 +14,7 @@ local inventoryReducer = function(state, action)
             NextUpgradeTime = nil
         }),
         Collection = {},
+        IndexRewards = {},
         Characters = Array.create(8,"Empty")
     }
     state = state or initialState
@@ -46,11 +47,18 @@ local inventoryReducer = function(state, action)
                             TimesObtained = tonumber(old.TimesObtained or 0) + 1
                         })
                     end,function()
+                        if not table.find({"Base","Gold","Diamond","Rainbow","Volcanic"},mutation) then
+                            return { IsNew = false, TimesObtained = 1 }
+                        end
                         return { IsNew = payload.charType ~= "LuckyWarrior", TimesObtained = 1 }
                     end)
                 }),
             })
         end
+    elseif action.type == "ADD_INDEX_REWARD" and typeof(payload)=="string" then
+        return Dictionary.update(state,"IndexRewards",function(set)
+            return Sift.Set.add(set,payload)
+        end)
     elseif action.type == "VIEW_CHARACTER" then
         local name, mutation = payload.name, payload.mutation or "Base"
 
@@ -67,7 +75,7 @@ local inventoryReducer = function(state, action)
         else
             return Dictionary.merge(state,{
                 Collection = Dictionary.map(state.Collection,function(v,k)
-                    return Dictionary.map(v,function(v2,k2)
+                    return Dictionary.map(v,function(v2)
                         return Dictionary.merge(v2,{
                             IsNew = false
                         })
@@ -126,12 +134,16 @@ local inventoryReducer = function(state, action)
             local target = list[payload.target]
             if (chr and chr~="Empty") and target then
                 return Dictionary.merge(list,{
-                    [payload.slot] = target,
+                    [payload.slot] = (typeof(target)=="table" and next(target)~=nil) and target or "Empty",
                     [payload.target] = chr
                 })
             end
             return list
         end)
+    elseif action.type == "CLEAR_COLLECTION" then
+        return Dictionary.merge(state,{
+            Collection = {}
+        })
     elseif action.type == "REMOVE_CHARACTER" then
         return Dictionary.merge(state,{
             Characters = Array.update(state.Characters,payload.slot,function() return "Empty" end)
@@ -167,7 +179,7 @@ local statusReducer = function(state,action)
         IsVIP = false,
         AutoBuyItems = {},
         Spins = 0,
-        NextSpinTime = 0,
+        NextSpinTime = os.time(),
     }
 
     local payload = action.payload
@@ -248,7 +260,10 @@ local settingsReducer = function(state,action)
         ["Music Volume"] = 1,
         ["Sound Effects"] = 1,
         ["VFX"] = true,
-        ["Banner Color"] = Color3.new(1,1,1):ToHex()
+        ["Chat Tips"] = true,
+        ["Banner Color"] = Color3.new(1,1,1):ToHex(),
+        ["Base Theme"] = "Normal",
+        ["Arrow Indicators"] = true,
     }
     state = state or initialSettings
 

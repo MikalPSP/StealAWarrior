@@ -46,7 +46,7 @@ local ProfileService = Knit.CreateService {
 	},
 
 	Settings = {
-		LogEconomyEvents = false,
+		LogEconomyEvents = true,
 		DataVersion = "BETA_BUILD",
 		SavePlayTime = true
 	},
@@ -209,7 +209,7 @@ function ProfileService:ReleaseProfile(player)
 		self.Profiles[player] = nil
 		self.Client.Data:ClearFor(player)
 
-        print(("Saving PlayerData for %s <%d>"):format(player.Name,player.UserId))
+        --print(("Saving PlayerData for %s <%d>"):format(player.Name,player.UserId))
     end
 end
 

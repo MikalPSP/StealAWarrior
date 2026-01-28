@@ -119,6 +119,12 @@ local Service = Knit.CreateService({
 				payload = { name = "Zeus", mutation = "Divine", permanent = true }
 			}
 		},
+		[3523291022] = {
+			Name = "Unlock Gate",
+			Icon = "rbxassetid://0",
+			Description = "Unlocks the player's gate.",
+			ProductType = "Gameplay",
+		}
 
 
 	},
@@ -249,7 +255,7 @@ function Service:GrantProduct(player, productId, receiptInfo)
 				Knit.GetService("ProfileService"):Dispatch(player, Sift.Dictionary.merge(callback,{
 					logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.IAP.Name }
 				}))	
-				self.Server:SendNotification(player, string.format("+%s COIN$ Rewarded",GameData.Utils.formatNumber(callback.payload)), Color3.fromRGB(253, 216, 53))
+				Knit.GetService("GameService"):SendNotification(player, string.format("+%s COIN$ Rewarded",GameData.Utils.formatNumber(callback.payload)), Color3.fromRGB(253, 216, 53))
 
 			else
 				Knit.GetService("ProfileService"):Dispatch(player, callback)
@@ -333,6 +339,11 @@ function Service:KnitStart()
 
 						local activeRequest = self.Client.ActiveGiftRequest:GetFor(player)
 						local productName = self:GetProductName(receiptInfo.ProductId)
+
+						if productName == "Unlock Gate" and not Knit.GetService("GameService").Client.PendingGateUnlock:GetFor(player) then
+							return Enum.ProductPurchaseDecision.NotProcessedYet
+						end
+
 						if activeRequest and activeRequest.ProductId == receiptInfo.ProductId and (activeRequest.TargetPlayer and activeRequest.TargetPlayer:IsA("Player")) then
 							self:GrantProduct(activeRequest.TargetPlayer, receiptInfo.ProductId, receiptInfo)
 							Knit.GetService("GameService"):SendNotification(activeRequest.TargetPlayer,

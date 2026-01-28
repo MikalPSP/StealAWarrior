@@ -82,11 +82,20 @@ Knit.OnStart():andThen(function()
                     Knit.GetService("EventService"):StartEvent(eventName)
                 end
             elseif msg=="serverluck" then
-                Knit.GetService("EventService"):SetServerLuck(2,60)
+                Knit.GetService("EventService"):SetServerLuck(2,5*60)
+            elseif msg=="clear characters" then
+                for _,p in Players:GetPlayers() do
+                    Knit.GetService("ProfileService"):Dispatch(p,{type = "CLEAR_CHARACTERS"})
+                end
+            elseif msg == "lgbt" then
+                local plot = Knit.GetService("GameService"):GetPlotForPlayer(plr)
+                if plot then
+                    plot:SetBaseTheme("Rainbow")
+                end
             elseif msg:match("^spawn.+$") then
                 local mutation, charName = msg:match("^spawn(%w-) (.+)")
 
-                if table.find({"gold","diamond","acid","galaxy","fire","rainbow","shocked","divine"},mutation:lower()) then
+                if table.find({"gold","diamond","acid","galaxy","volcanic","rainbow","shocked","divine"},mutation:lower()) then
                     mutation = mutation:sub(1,1):upper()..mutation:sub(2):lower()
                 else mutation = nil end
 

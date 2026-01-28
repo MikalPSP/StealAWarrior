@@ -120,13 +120,24 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
         self.CurrentModel = nil
     end
 
+    local hasMutationVariant = false
+    if typeof(mutation)=="string" and mutation ~= "Base" then
+        local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
+        if variantFolder and variantFolder:FindFirstChild(characterTemplate.Name) then
+            local variantModel = variantFolder[characterTemplate.Name]:Clone()
+            for k,v in characterTemplate:GetAttributes() do if k~="RBX_ReimportId" then variantModel:SetAttribute(k,v) end end
+            characterTemplate = variantModel
+
+            hasMutationVariant = true
+        end
+    end
     if characterTemplate and characterTemplate:IsA("Model") then
         local characterModel = characterTemplate:Clone()
         characterModel:AddTag("Character")
         characterModel.Parent = self.Instance
 
         local effectTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation)
-        if effectTemplate then
+        if not hasMutationVariant and effectTemplate then
             local eff = effectTemplate:Clone()
             eff.Name = "VFX"
             eff.CanCollide, eff.Anchored = false, false
@@ -146,9 +157,9 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
             if mainBone then
                 for _,x in eff:GetChildren() do x.Parent = mainBone end
             end
-            characterModel:SetAttribute("Mutation",mutation)
         end
 
+        characterModel:SetAttribute("Mutation",mutation)
         for _,x in characterModel:GetDescendants() do
             if x:IsA("BasePart") then x.CollisionGroup = "Characters" end
         end
@@ -160,11 +171,22 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
         characterModel.PrimaryPart.Anchored = true
 
         if characterModel:FindFirstChildWhichIsA("Humanoid") then
-            task.delay(1,function()
-                if characterModel.PrimaryPart then
-                    characterModel.PrimaryPart.Anchored = false
+            local humanoid = characterModel:FindFirstChildWhichIsA("Humanoid")
+            local animTrack = (function()
+                local idleObj = characterModel:FindFirstChild("Animate") and characterModel:FindFirstChild("Animate"):FindFirstChild("idle")
+                if idleObj then
+                    local anim = idleObj:FindFirstChild("Animation1") or idleObj:FindFirstChildOfClass("Animation",true)
+                    if anim then return humanoid:LoadAnimation(anim) end
                 end
-            end)
+            end)()
+
+            if animTrack then
+                animTrack.Looped = true
+                animTrack:Play()
+            end
+            -- task.delay(1,function()
+            --     if characterModel.PrimaryPart then characterModel.PrimaryPart.Anchored = false end
+            -- end)
         end
 
         characterModel:PivotTo(self.Slot:GetPivot())

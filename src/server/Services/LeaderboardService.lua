@@ -19,8 +19,8 @@ local Service = Knit.CreateService({
     },
 
 	Settings = {
-		PageSize = 50,
-		RefreshTime = 30,
+		PageSize = 25,
+		RefreshTime = 60,
 	},
 	Connections = {},
 	LastRefresh = os.time(),
@@ -64,16 +64,20 @@ function Service:KnitStart()
     end)
 end
 
-function Service:GetOrderedStore(storeName, pageSize: number?)
+function Service:GetBudget()
+	return DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.GetSortedAsync)
+end
+
+function Service:GetOrderedStore(storeName, maxCount: number?)
     if not self.Stores[storeName] then
         warn(("LeaderboardService:GetOrderedStore() \"%s\" OrderStore Doesn't Exit"):format(storeName))
         return
     end
 
-	local list = {}
 
+	local list = {}
 	local success, pages = pcall(function()
-		return self.Stores[storeName]:GetSortedAsync(false,tonumber(pageSize) or self.Settings.PageSize,1,nil)
+		return self.Stores[storeName]:GetSortedAsync(false,self.Settings.PageSize,1,nil)
 	end)
 
 	if not success then 
@@ -84,11 +88,12 @@ function Service:GetOrderedStore(storeName, pageSize: number?)
 	while true do
 		for _, entry in (pages:GetCurrentPage()) do
 			table.insert(list,entry)
+			if typeof(maxCount)=="number" and #list>=maxCount then break end
 		end
+		repeat task.wait() until self:GetBudget()>=self.Settings.PageSize
 		if pages.IsFinished then break end
 		pages:AdvanceToNextPageAsync()
 	end
-
 
 	return Sift.Array.map(list,function(v)
 		local userId = tonumber(v.key:match("(%d+)"))

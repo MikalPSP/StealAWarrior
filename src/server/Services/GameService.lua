@@ -1,4 +1,5 @@
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local AnalyticsService = game:GetService("AnalyticsService")
 local ServerStorage = game:GetService("ServerStorage")
 local GroupService = game:GetService("GroupService")
 local SoundService = game:GetService("SoundService")
@@ -25,6 +26,7 @@ local GameService = Knit.CreateService({
         MovingCharacter = Knit.CreateProperty(),
         Plot = Knit.CreateProperty({}),
         PendingCharacters = Knit.CreateProperty(0),
+        PendingGateUnlock = Knit.CreateProperty(nil),
         OnNotify = Knit.CreateSignal(),
         IncomeRate = Knit.CreateProperty(0),
         FriendBoost = Knit.CreateProperty(0),
@@ -38,16 +40,17 @@ local GameService = Knit.CreateService({
         SpawnInterval = 4,
         SpawnLifetime = 120,
         RarityWeights = {
-            Common = 125,
-            Rare = 60,
-            Epic = 15,
+            Common = 135,
+            Rare = 70,
+            Epic = 20,
             Legendary = 2.5,
             Mythic = 1,
             Secret = .25,
             OG = .1
         },
         MutationWeights = { Base = 85, Gold = 25, Diamond = 10, Rainbow = 1 },
-        GuaranteeTimes = { Legendary = 300, Mythic = 900 },
+
+        GuaranteeTimes = { Legendary = 600, Mythic = 1800 },
         OfflineProfitFactor = 0.1,
     },
     Characters = {},
@@ -176,10 +179,16 @@ function GameService:KnitStart()
             newPlot:SetFloors(math.ceil(#data.Inventory.Characters/8)-1)
             newPlot:LoadCharacters(data.Inventory.Characters)
             newPlot:SetBannerColor(data.Settings["Banner Color"] and Color3.fromHex(data.Settings["Banner Color"]) or Color3.new(1,1,1))
+            newPlot:SetBaseTheme(data.Settings["Base Theme"] or "Normal")
+
             newPlot.CollectZone:UpdateUI("MainText",{ Text = string.format("COINS MULTI:\nx%.1f",multiplier) })
             newPlot.OnSlotCollected:Connect(function(slotIdx, amount, offlineAmount)
 
-                profileService:Dispatch(player,{ type = "ADD_COINS", payload = amount + offlineAmount})
+                profileService:Dispatch(player,{
+                    type = "ADD_COINS", payload = amount + offlineAmount, 
+                    logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
+                })
+
                 profileService:Dispatch(player, { type = "UPDATE_PROFIT", payload = {
                     slot = slotIdx,
                     amount = -1*math.abs(amount),
@@ -227,7 +236,7 @@ function GameService:KnitStart()
 
             for i,slot in ipairs(plot.Slots) do
                 local chr = characters[i]
-                if chr and chr ~= "Empty" and typeof(chr.Tier)=="number" then
+                if chr and chr ~= "Empty" and typeof(chr.Tier)=="number" and slot.CurrentModel then
                     local hasDupes = Sift.Array.count(characters,function(v,idx)
                         return v.Name == chr.Name and v.Tier == chr.Tier and v.Mutation == chr.Mutation
                     end)>=2
@@ -245,6 +254,10 @@ function GameService:KnitStart()
                 plot:SetBannerColor(state.Settings["Banner Color"] and Color3.fromHex(state.Settings["Banner Color"]) or Color3.new(1,1,1))
             end
 
+            if state.Settings["Base Theme"] ~= lastState.Settings["Base Theme"] then
+                plot:SetBaseTheme(state.Settings["Base Theme"])
+            end
+
         end
 
         -- local autoBuyItems = Sift.Set.difference(state.Status.AutoBuyItems,lastState.Status.AutoBuyItems)
@@ -257,6 +270,36 @@ function GameService:KnitStart()
                 Coins = state.Inventory.Coins, Rebirths = state.Statistics.Rebirths,
                 Steals = state.Statistics.Steals
             })
+
+            local collected = state.Inventory.Collection or {}
+            local totalCharacters = Sift.Dictionary.count(GameData.CharacterData)
+            local mutationOwned = Sift.Dictionary.map(Sift.Array.concat(Sift.Dictionary.keys(GameData.Mutations),{"Normal"}),function(mutation)
+                return Sift.Dictionary.count(collected,function(chr)
+                    if mutation == "Normal" then
+                        return chr.Base ~= nil
+                    end
+                    return chr[mutation] ~= nil
+                end),mutation
+            end)
+
+            for name,amount in mutationOwned do
+                local ratio = (amount / totalCharacters)
+                local hasReward = state.Inventory.IndexRewards and state.Inventory.IndexRewards[name]
+                if ratio >= .75 and not hasReward then
+                    self:SendNotification(player, `Congratulations! You have collected all {name} characters!`)
+                    profileService:Dispatch(player,{
+                        type = "ADD_INDEX_REWARD",
+                        payload = name
+                    })
+                    profileService:Dispatch(player,{
+                        type = "ADD_MULTIPLIER",
+                        payload = 0.5
+                    })
+                end
+            end
+
+
+
         end
     end)
 
@@ -269,6 +312,25 @@ function GameService:KnitStart()
                 self:GiveCharacter(player, charData, true)
                 self:SendNotification(player, `You have received a {charData.Name}!`, Color3.fromRGB(255,215,0))
             end
+        elseif product and product.Name == "Unlock Gate" then
+            local pendingGateUnlock = self.Client.PendingGateUnlock:GetFor(player)
+            if pendingGateUnlock then
+                self.Client.PendingGateUnlock:SetFor(player, nil)
+                local plot = self:GetPlotForPlayer(pendingGateUnlock)
+                if plot then
+                    local numFloors = plot.NumFloors or 0
+                    plot:UnlockGate(15+(10*numFloors))
+                end
+            end
+
+            -- if not didUnlock then
+            --     self:SendNotification(player, "Failed to unlock gate. You have been compensated $5,000", "Warning")
+            --     profileService:Dispatch(player,{
+            --         type = "ADD_COINS",
+            --         payload = 5000,
+            --         logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
+            --     })
+            -- end
         end
     end)
 
@@ -393,7 +455,7 @@ function GameService:KnitStart()
                     self.Client.IncomeRate:SetFor(plr,totalProfit)
                 end
 
-                local spinTime = profileService:GetStatus(plr,"NextSpinTime") or 0
+                local spinTime = profileService:GetStatus(plr,"NextSpinTime")
                 if spinTime and os.time() >= spinTime then
                     profileService:Dispatch(plr,{ type = "CLAIM_SPIN" })
                     if spinTime>0 then self:SendNotification(plr, "You have received a free spin!") end
@@ -549,7 +611,7 @@ function GameService:GetRandomCharacter(rarity)
     if currentEvent then
         local mutationType = currentEvent.MutationType
         mutationData = Sift.Dictionary.merge(mutationData, {
-            [mutationType] = 50,
+            [mutationType] = 70,
             --[mutationType] = mutationData.Base//2,
         })
     end
@@ -582,18 +644,30 @@ function GameService:GetSpawnedCharacters()
 end
 
 function GameService:SpawnCharacter(name, mutation)
-    local charData = self.Characters[name]
+    local charData = self.Characters[name] and Sift.Dictionary.copyDeep(self.Characters[name]) or nil
     if charData and charData.Instance then
         if charData.Rarity == "OG" or charData.Type == "LuckyWarrior" then
             self.Client.OnNotify:FireAll(`{charData.Name} Spawned!`,"Rainbow")
         elseif table.find({"Epic","Legendary","Mythic","Secret"},charData.Rarity) then
             self.Client.OnNotify:FireAll(`{charData.Rarity} Spawned!`,RarityColors[charData.Rarity])
         end
-
         local profileService = Knit.GetService("ProfileService")
         local charModel = charData.Instance:Clone()
         local charHumanoid = charModel:FindFirstChild("Humanoid")
         local didHit, didClaim = false, false
+
+        local hasMutationVariant
+        if typeof(mutation)=="string" and mutation ~= "Base" then
+            local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
+            if variantFolder and variantFolder:FindFirstChild(charModel.Name) then
+                local mutatedModel = variantFolder[charModel.Name]:Clone()
+                for k,v in charData do if typeof(v)~="Instance" then mutatedModel:SetAttribute(k,v) end end
+                charModel = mutatedModel
+                charHumanoid = charModel:FindFirstChild("Humanoid")
+                hasMutationVariant = true
+            end
+        end
+
 
 
         for _,x in charModel:GetDescendants() do
@@ -610,7 +684,7 @@ function GameService:SpawnCharacter(name, mutation)
             charData.Mutation = mutation
 
             local effectTemplate = ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation)
-            if effectTemplate then
+            if not hasMutationVariant and effectTemplate then
                 local eff = effectTemplate:Clone()
                 eff.CanCollide, eff.Anchored = false, false
 
@@ -638,29 +712,29 @@ function GameService:SpawnCharacter(name, mutation)
             end
         end
 
+        local rootPart = charHumanoid and charHumanoid.RootPart or charModel.PrimaryPart
+        rootPart.Anchored = true
+        task.delay(1,function()
+            rootPart.Anchored = false
+            if charHumanoid then
+                charHumanoid.WalkSpeed = 12
+                charHumanoid.BreakJointsOnDeath = false
+                charHumanoid:Move(Vector3.xAxis)
+            else
+                local controller = charModel:FindFirstChildWhichIsA("ControllerManager")
+                if controller then
+                    controller.ActiveController = controller:FindFirstChildWhichIsA("GroundController")
+                    controller.BaseMoveSpeed = 12
+                    controller.FacingDirection, controller.MovingDirection = Vector3.xAxis, Vector3.xAxis
+                end
+            end
+        end)
+
         charModel:PivotTo(self.Settings.SpawnPosition*CFrame.Angles(0,math.rad(-90),0))
         charModel:SetAttribute("Mutation",mutation)
         charModel:SetAttribute("Profit", GameData.calculateProfit(charData.Profit,nil,nil,mutation))
         charModel:AddTag("Character")
         charModel.Parent = workspace:FindFirstChild("SpawnedCharacters")
-
-        task.delay(1,function() charModel.PrimaryPart.Anchored = false end)
-
-        local rootPart = nil
-        if charHumanoid then
-            charHumanoid.WalkSpeed = 12
-            charHumanoid.BreakJointsOnDeath = false
-            charHumanoid:Move(Vector3.xAxis)
-            rootPart = charHumanoid.RootPart
-        else
-            local controller = charModel:FindFirstChildWhichIsA("ControllerManager")
-            if controller then
-                controller.ActiveController = controller:FindFirstChildWhichIsA("GroundController")
-                controller.BaseMoveSpeed = 12
-                controller.FacingDirection, controller.MovingDirection = Vector3.xAxis, Vector3.xAxis
-            end
-            rootPart = charModel.PrimaryPart
-        end
 
         rootPart.Touched:Connect(function(hitPart)
             if not didHit and not didClaim then
@@ -691,10 +765,6 @@ function GameService:SpawnCharacter(name, mutation)
             local numPending = self.Client.PendingCharacters:GetFor(player)
             local hasEmptySlot = self:HasEmptySlot(player)
 
-            local newPrice = math.floor(price*1.5)
-            prompt:SetAttribute("Price",newPrice)
-            charModel:SetAttribute("IsBought",true)
-            prompt.ObjectText = string.format("%s $%d",charData.Name,newPrice)
 
             if not canAfford then
                 self:SendNotification(player, "Not enough coins!", "Warning")
@@ -703,6 +773,13 @@ function GameService:SpawnCharacter(name, mutation)
             elseif not plot then
                 return
             else
+                local newPrice = math.floor(price*1.5)
+                prompt:SetAttribute("Price",newPrice)
+                charModel:SetAttribute("Price",newPrice)
+                charModel:SetAttribute("IsBought",true)
+                prompt.ObjectText = string.format("%s $%d",charData.Name,newPrice)
+
+
                 if lastBuyer then
                     local old = self.Client.PendingCharacters:GetFor(lastBuyer)
                     self.Client.PendingCharacters:SetFor(lastBuyer, math.max(0,old - 1))
@@ -723,7 +800,7 @@ function GameService:SpawnCharacter(name, mutation)
 
                 profileService:Dispatch(player,{
                     type = "ADD_COINS",
-                    payload = -1*charData.Price,
+                    payload = -1*price,
                     logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
                 })
 
@@ -770,6 +847,12 @@ function GameService:SpawnCharacter(name, mutation)
                         connections = {}
                         charModel:Destroy() charData.Tier = 1
                         self:GiveCharacter(player, charData)
+
+                        AnalyticsService:LogCustomEvent(player,"CharacterBought",1,{
+                            [Enum.AnalyticsCustomFieldKeys.CustomField01.Name] = charData.Name,
+                            [Enum.AnalyticsCustomFieldKeys.CustomField02.Name] = charData.Rarity,
+                            [Enum.AnalyticsCustomFieldKeys.CustomField03.Name] = charData.Mutation
+                        })
                     end
                 end)
 
@@ -831,6 +914,22 @@ function GameService:StealCharacter(player, plot, idx)
         local connections = {}
         if charData and charData.Instance then
             local charModel = charData.Instance:Clone()
+
+            if player:DistanceFromCharacter(charModel:GetPivot().Position)>=10 then
+                warn(`[POSSIBLE EXPLOIT] {player.Name} <{player.UserId}> was too far from the CharacterSlot when attempting to steal!`)
+                return
+            end
+
+            local hasMutationVariant = false
+            local mutation = targetSlot.CurrentModel:GetAttribute("Mutation") or "Base"
+            if typeof(mutation)=="string" and mutation ~= "Base" then
+                local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
+                if variantFolder and variantFolder:FindFirstChild(charModel.Name) then
+                    local mutatedModel = variantFolder[charModel.Name]:Clone()
+                    charModel = mutatedModel
+                    hasMutationVariant = true
+                end
+            end
             for _,x in ipairs(charModel:GetChildren()) do
                 if x:IsA("Script") then x:Destroy()
                 elseif x:IsA("BasePart") then
@@ -884,6 +983,9 @@ function GameService:StealCharacter(player, plot, idx)
             animTrack:AdjustWeight(1)
             targetSlot:SetStolen(true)
             charData.Tier = tonumber(targetSlot.CurrentModel:GetAttribute("Tier")) or 1
+            charData.Mutation = mutation
+
+
 
             self.Client.StolenCharacter:SetFor(player, charData)
             self.Client.OnNotify:Fire(plot.CurrentOwner,`Your {charData.Name} was stolen!`,"Warning")
@@ -896,6 +998,8 @@ function GameService:StealCharacter(player, plot, idx)
             local function cleanup()
                 for _,conn in connections do conn:Disconnect() end
                 if player then self.Client.StolenCharacter:SetFor(player,nil) end
+                if plrCharacter.Humanoid then plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed end
+
                 charModel:Destroy() animTrack:Stop()
 
                 targetSlot:SetStolen(false)
@@ -903,8 +1007,6 @@ function GameService:StealCharacter(player, plot, idx)
                     type = "SET_STOLEN",
                     payload = { slot = idx, active = false }
                 })
-
-                warn("RETURNING STOLEN CHARACTER")
             end
 
             table.insert(connections,plrCharacter.Humanoid.Died:Once(cleanup))
@@ -925,7 +1027,8 @@ function GameService:StealCharacter(player, plot, idx)
                 if not didFinish then
 
                     if plrCharacter.Humanoid then
-                        plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed*.75
+                        plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed*.5
+                        plrCharacter.Humanoid:UnequipTools()
                     end
                     local dist = ((charModel:GetPivot().Position - playerPlot.Gate:GetPivot().Position)*Vector3.new(1,0,1)).Magnitude
                     didFinish = dist<=5
@@ -941,6 +1044,13 @@ function GameService:StealCharacter(player, plot, idx)
                     profileService:Dispatch(player,{ type = "ADD_STEALS" })
 
                     self:GiveCharacter(player, charData)
+
+                    AnalyticsService:LogCustomEvent(player,"CharacterStolen",1,{
+                        [Enum.AnalyticsCustomFieldKeys.CustomField01.Name] = charData.Name,
+                        [Enum.AnalyticsCustomFieldKeys.CustomField02.Name] = charData.Rarity,
+                        [Enum.AnalyticsCustomFieldKeys.CustomField03.Name] = charData.Mutation
+                    })
+
                     if plrCharacter.Humanoid then plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed end
                 end
             end)
@@ -1071,7 +1181,7 @@ function GameService:GiveCharacter(player, charData, is_permanent)
     profileService:Dispatch(player, {
         type = "ADD_CHARACTER",
         payload = {
-            name = charData.Name, tier = charData.Tier, mutation = charData.Mutation,
+            name = charData.Name, tier = charData.Tier, mutation = charData.Mutation or "Base",
             permanent = is_permanent or false, charType = charData.Type,
         }
     })
@@ -1094,7 +1204,7 @@ function GameService.Client:GrantSpinReward(player, rewardType)
         self.Server:GiveCharacter(player, charData)
         self.Server:SendNotification(player, string.format("You've been awarded \"%s\"",charData.Name), Color3.fromRGB(253, 216, 53))
     elseif rewardType == "Event" then
-        Knit.GetService("EventService"):StartEvent("Fire")
+        Knit.GetService("EventService"):StartEvent("Gold") --Volcanic
 
     elseif typeof(coinRewards[rewardType])=="number" then
         local amount = coinRewards[rewardType]
@@ -1102,11 +1212,15 @@ function GameService.Client:GrantSpinReward(player, rewardType)
         Knit.GetService("ProfileService"):Dispatch(player,{
             type = "ADD_COINS",
             payload = amount,
-            logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay }
+            logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
         })
 
         self.Server:SendNotification(player, string.format("+%s COIN$ Rewarded",GameData.Utils.formatNumber(amount)), Color3.fromRGB(253, 216, 53))
     end
+
+    AnalyticsService:LogCustomEvent(player,"WheelSpin",1,{
+        [Enum.AnalyticsCustomFieldKeys.CustomField01.Name] = rewardType
+    })
 end
 
 function GameService.Client:Rebirth(player)
@@ -1158,6 +1272,7 @@ function GameService.Client:Rebirth(player)
             if humanoid then humanoid:UnequipTools() end
             for _,x in player.Backpack:GetChildren() do if x:IsA("Tool") and x.Name ~= "Bat" then x:Destroy() end end
             for _,x in player.StarterGear:GetChildren() do if x:IsA("Tool") and x.Name ~= "Bat" then x:Destroy() end end
+     
 
             self.Server:SendNotification(player, `You Have Reached Rebirth {nextRebirth}!`, "Info")
             return true
@@ -1203,6 +1318,16 @@ function GameService.Client:SellCharacter(player, instance)
         end
     end
 end
+
+function GameService.Client:PromptUnlockGate(player, targetPlayer)
+    if not targetPlayer or not targetPlayer:IsA("Player") then return end
+    local plot = self.Server:GetPlotForPlayer(targetPlayer)
+    if plot and plot.Locked and plot.CurrentOwner == targetPlayer and player ~= targetPlayer then
+        self.Server.Client.PendingGateUnlock:SetFor(player, targetPlayer)
+        game:GetService("MarketplaceService"):PromptProductPurchase(player, 3523291022)
+    end
+end
+
 
 function GameService.Client:OpenLuckyWarrior(player, instance)
     local plot = self.Server:GetPlotForPlayer(player)

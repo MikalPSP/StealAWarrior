@@ -31,6 +31,7 @@ function Plot:Construct()
      self.CurrentOwner = nil
      self.Locked = true
      self.NextLockTime = 0
+     self.NextUnlockTime = 0
 
      self.BackupModel = self.Instance:Clone()
      self.Gate = self.Instance:FindFirstChild("Gate")
@@ -39,6 +40,7 @@ function Plot:Construct()
      self.OnSlotCollected = Signal.new()
      self.OnZoneCollected = Signal.new()
      self.OnSlotsUpdated = Signal.new()
+     self.CurrentTheme = "Normal"
 
      self.Connections = {}
      self.Slots = {}
@@ -107,6 +109,51 @@ function Plot:SetBannerColor(color: Color3)
      end
      self.BannerColor = color
 end
+
+function Plot:SetBaseTheme(themeName: string)
+     local color = ({
+          ["Normal"] = Color3.fromRGB(139, 137, 140),
+          ["Gold"] = Color3.fromRGB(239, 184, 56),
+          ["Diamond"] = Color3.fromRGB(18, 238, 212),
+     })[themeName]
+
+     if themeName == "Rainbow" and self.CurrentTheme ~= "Rainbow" then
+          task.spawn(function()
+               self.CurrentTheme = themeName
+               while self.CurrentTheme == "Rainbow" do
+                    for hue=0,1,(1/12) do
+                         local tweens = {}
+                         for _,part in self.Instance:GetDescendants() do
+                              if part:IsA("BasePart") and part.Name == "ColorPart" then
+                                   local tween = TweenService:Create(part,TweenInfo.new(1),{Color = Color3.fromHSV(hue,1,1)})
+                                   table.insert(tweens,tween)
+                                   tween:Play()
+                              end
+                         end
+                         self.ActiveRainbowTweens = tweens
+                         task.wait(1)
+                    end
+               end
+          end)
+     elseif color then
+          self.CurrentTheme = themeName
+          if self.ActiveRainbowTweens then
+               for _,tween in self.ActiveRainbowTweens do tween:Cancel() end
+               self.ActiveRainbowTweens = nil
+          end
+
+          for _,part in self.Instance:GetDescendants() do
+               if part:IsA("BasePart") then
+                    if part.Name == "ColorPart" then part.Color = color
+                    elseif part.Name == "ColorPart2" then
+                         if themeName == "Normal" then part.Color = Color3.fromRGB(98, 97, 99)
+                         else part.Color = color end
+                    end
+               end
+          end
+     end
+end
+
 function Plot:SetFloors(numFloors)
 
      local hasFloors = numFloors>0
@@ -149,7 +196,9 @@ function Plot:SetFloors(numFloors)
                if prevFloor ~= self.Instance then prevFloor.Roof:Destroy() end
           end
           self:SetBannerColor(self.BannerColor or Color3.new(1,1,1))
+          self:SetBaseTheme(self.CurrentTheme or "Normal")
      end
+     self.NumFloors = numFloors
 end
 
 
@@ -274,6 +323,7 @@ function Plot:LockGate(duration)
      duration = tonumber(duration) or 60
 
      self.Locked = true
+     self.Instance:SetAttribute("Locked",self.Locked)
      self.NextLockTime = tick() + duration
 
      for _,x in self.Gate:GetDescendants() do
@@ -295,11 +345,12 @@ function Plot:LockGate(duration)
      Knit.GetService("GameService"):SendNotification(self.CurrentOwner,`Gate locked for {duration} seconds!`,"Default")
 end
 
-function Plot:UnlockGate()
+function Plot:UnlockGate(duration: number?)
      self.GateButton:UpdateUI("TimerLabel",{ Visible = false})
      self.GateButton:UpdateUI("MainText",{ Text = "LOCK" })
 
      self.Locked = false
+     self.Instance:SetAttribute("Locked",self.Locked)
 
      for _,x in self.Gate:GetDescendants() do
           if x == self.Gate.PrimaryPart then x.CanCollide = false
@@ -314,8 +365,16 @@ function Plot:UnlockGate()
      sound:Play()
      task.delay(5,function() sound:Destroy() end)
 
+     if typeof(duration)=="number" and duration>0 then
+          --local timeLeft = (self.NextLockTime - tick())
+          self.NextLockTime = tick() + duration
+     end
      if self.CurrentOwner then
-          Knit.GetService("GameService"):SendNotification(self.CurrentOwner,"Your gate is unlocking!","Warning")
+          if typeof(duration)=="number" and duration>0 then
+               Knit.GetService("GameService"):SendNotification(self.CurrentOwner,`Gate unlocked for {duration} seconds!`,"Warning")
+          else
+               Knit.GetService("GameService"):SendNotification(self.CurrentOwner,"Your gate is unlocking!","Warning")
+          end
      end
 end
 

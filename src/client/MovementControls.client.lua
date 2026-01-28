@@ -9,7 +9,11 @@ if game:GetService("RunService"):IsStudio() then
         local humanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid")
         if humanoid then
             local normalSpeed = game.StarterPlayer.CharacterWalkSpeed
-            humanoid.WalkSpeed = inputState == Enum.UserInputState.Begin and normalSpeed*1.5 or normalSpeed
+            if humanoid.Parent:FindFirstChild("CharacterWeld") then
+                humanoid.WalkSpeed = normalSpeed*.5
+            else
+                humanoid.WalkSpeed = inputState == Enum.UserInputState.Begin and normalSpeed*1.5 or normalSpeed
+            end
             return Enum.ContextActionResult.Sink
         end
     end,true,Enum.KeyCode.LeftShift,Enum.KeyCode.ButtonL3)

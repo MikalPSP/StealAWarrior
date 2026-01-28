@@ -25,7 +25,8 @@ local EventService = Knit.CreateService({
     CurrentEvent = nil,
 
     Settings = {
-        EventWeights = { Shocked = 3, Galactic = 1, Volcanic = 8, Acid = 6, Divine = 2 },
+        --EventWeights = { Shocked = 3, Galactic = 1, Volcanic = 8, Acid = 6, Divine = 2 },
+        EventWeights = { Volcanic = 0, Gold = 10, Diamond = 1 },
         EventInterval = 3600
     },
 
@@ -42,9 +43,9 @@ local EventService = Knit.CreateService({
             Description = "Warriors get transformed by deep space events!",
         },
 
-        ["Fire"] = {
+        ["Volcanic"] = {
             Duration = 300,
-            MutationType = "Fire",
+            MutationType = "Volcanic",
             Description = "Warriors are ignited with flames!",
         },
 
@@ -60,6 +61,12 @@ local EventService = Knit.CreateService({
             Description = "All warriors turn to gold!"
         },
 
+        ["Diamond"] = {
+            Duration = 300,
+            MutationType = "Diamond",
+            Description = "All warriors turn to diamond!"
+        },
+
         ["Divine"] = {
             Duration = 300,
             MutationType = "Divine",
@@ -71,8 +78,6 @@ local EventService = Knit.CreateService({
 function EventService:KnitInit()
 
 end
-
-
 
 function EventService:KnitStart()
     local economyService = Knit.GetService("EconomyService")
@@ -169,12 +174,14 @@ function EventService:StartEvent(eventName)
         Knit.GetService("GameService").Client.OnNotify:FireAll("Lightning Event Has Started!", Color3.fromRGB(0, 170, 255))
     elseif eventName == "Galaxy" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Galactic Event Has Started!", Color3.fromRGB(170, 0, 255)) 
-    elseif eventName == "Fire" then
+    elseif eventName == "Volcanic" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Volcanic Event Has Started!", Color3.fromRGB(255, 85, 0))
     elseif eventName == "Acid" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Acidic Event Has Started!", Color3.fromRGB(0, 255, 0))  
     elseif eventName == "Gold" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Midas Touch Event Has Started!", Color3.fromRGB(255, 215, 0))
+    elseif eventName == "Diamond" then
+        Knit.GetService("GameService").Client.OnNotify:FireAll("Diamond Event Has Started!", Color3.fromRGB(185, 242, 255))
     elseif eventName == "Divine" then
         Knit.GetService("GameService").Client.OnNotify:FireAll("Divine Event Has Started!", Color3.fromRGB(255, 175, 100))
     end

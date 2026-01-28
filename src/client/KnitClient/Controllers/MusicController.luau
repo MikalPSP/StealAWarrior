@@ -30,7 +30,7 @@ local MusicController = Knit.CreateController({
             ["Fury of the Northmen"] = "rbxassetid://91284201329036",
             ["Voodoo Warrior"] = "rbxassetid://9046952451",
             ["The Warrior King's Lament"] = "rbxassetid://92188346907148", --Divine Maybe?
-            ["La Cumbia Warrior"] = "rbxassetid://97152892719906",
+            ["Hymn for the Lost Warriors"] = "rbxassetid://134303607526582",
             ["Odin's Oath"] = "rbxassetid://130800347561846",
             ["Warrior's Honor"] = "rbxassetid://139658293130549",
 
