@@ -27,6 +27,7 @@ local EventService = Knit.CreateService({
     Settings = {
         --EventWeights = { Shocked = 3, Galactic = 1, Volcanic = 8, Acid = 6, Divine = 2 },
         EventWeights = { Volcanic = 0, Gold = 10, Diamond = 1 },
+        --EventWeights = { Volcanic = 1 },
         EventInterval = 3600
     },
 

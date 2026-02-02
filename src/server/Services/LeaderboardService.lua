@@ -29,10 +29,12 @@ local Service = Knit.CreateService({
 
 function Service:KnitStart()
 
-	task.delay(5,function()
+	task.delay(10,function()
 		while true do
+			repeat task.wait() until self:GetSortedBudget()>=self.Settings.PageSize
             self.Client.TopSteals:Set(self:GetOrderedStore("Steals",100))
-            self.Client.TopEarning:Set(self:GetOrderedStore("Earning",100))
+			repeat task.wait() until self:GetSortedBudget()>=self.Settings.PageSize
+            self.Client.TopEarning:Set(self:GetOrderedStore("Earning",100,100e3))
 			task.wait(self.Settings.RefreshTime)
 		end
 	end)
@@ -64,11 +66,11 @@ function Service:KnitStart()
     end)
 end
 
-function Service:GetBudget()
+function Service:GetSortedBudget()
 	return DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.GetSortedAsync)
 end
 
-function Service:GetOrderedStore(storeName, maxCount: number?)
+function Service:GetOrderedStore(storeName, maxCount: number, minValue: number?)
     if not self.Stores[storeName] then
         warn(("LeaderboardService:GetOrderedStore() \"%s\" OrderStore Doesn't Exit"):format(storeName))
         return
@@ -77,7 +79,7 @@ function Service:GetOrderedStore(storeName, maxCount: number?)
 
 	local list = {}
 	local success, pages = pcall(function()
-		return self.Stores[storeName]:GetSortedAsync(false,self.Settings.PageSize,1,nil)
+		return self.Stores[storeName]:GetSortedAsync(false,self.Settings.PageSize,tonumber(minValue) or 1)
 	end)
 
 	if not success then 
@@ -90,7 +92,7 @@ function Service:GetOrderedStore(storeName, maxCount: number?)
 			table.insert(list,entry)
 			if typeof(maxCount)=="number" and #list>=maxCount then break end
 		end
-		repeat task.wait() until self:GetBudget()>=self.Settings.PageSize
+		repeat task.wait(1) until self:GetSortedBudget()>self.Settings.PageSize
 		if pages.IsFinished then break end
 		pages:AdvanceToNextPageAsync()
 	end
@@ -123,6 +125,8 @@ function Service:AppendStore(storeName, userId: number, value: number, increment
         warn(("LeaderboardService:AppendStore() \"%s\" OrderedStore Doesn't Exist"):format(storeName))
         return
 	elseif typeof(userId)~="number" or typeof(value)~="number" or (increment and value<=0) then warn("BAD!") return end
+
+	if DataStoreService:GetRequestBudgetForRequestType(Enum.DataStoreRequestType.SetIncrementAsync)<=0 then return end
 
 	local dsSuccess, dsRet = pcall(function()
         local key = string.format("User_%d",userId)

@@ -122,7 +122,9 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
 
     local hasMutationVariant = false
     if typeof(mutation)=="string" and mutation ~= "Base" then
+        print(mutation)
         local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
+        print(variantFolder)
         if variantFolder and variantFolder:FindFirstChild(characterTemplate.Name) then
             local variantModel = variantFolder[characterTemplate.Name]:Clone()
             for k,v in characterTemplate:GetAttributes() do if k~="RBX_ReimportId" then variantModel:SetAttribute(k,v) end end
@@ -137,25 +139,45 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
         characterModel.Parent = self.Instance
 
         local effectTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation)
-        if not hasMutationVariant and effectTemplate then
-            local eff = effectTemplate:Clone()
-            eff.Name = "VFX"
-            eff.CanCollide, eff.Anchored = false, false
+        if not hasMutationVariant then
+        
+            if effectTemplate then
+                local eff = effectTemplate:Clone()
+                eff.Name = "VFX"
+                eff.CanCollide, eff.Anchored = false, false
 
-            local weld = Instance.new("Weld")
-            weld.Part0 = characterModel.PrimaryPart
-            weld.Part1 = eff
-            weld.Parent = eff
+                local weld = Instance.new("Weld")
+                weld.Part0 = characterModel.PrimaryPart
+                weld.Part1 = eff
+                weld.Parent = eff
 
-            eff.Parent = characterModel.PrimaryPart
+                eff.Parent = characterModel.PrimaryPart
 
-            for _,x in eff:GetDescendants() do
-                if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
+                for _,x in eff:GetDescendants() do
+                    if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
+                end
+
+                local mainBone = characterModel.Name:find("Lucky Warrior$") and characterModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
+                if mainBone then
+                    for _,x in eff:GetChildren() do x.Parent = mainBone end
+                end
             end
 
-            local mainBone = characterModel.Name:find("Lucky Warrior$") and characterModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
-            if mainBone then
-                for _,x in eff:GetChildren() do x.Parent = mainBone end
+            local pbrTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation.."_Appearance")
+            if pbrTemplate then
+                for _,x in characterModel:GetDescendants() do
+                    if x:IsA("MeshPart") then
+                        if pbrTemplate:IsA("Texture") then
+                            for _,e in Enum.NormalId:GetEnumItems() do
+                                local texture = pbrTemplate:Clone()
+                                texture.Face = e
+                                texture.Parent = x
+                            end
+                        else
+                            pbrTemplate:Clone().Parent = x
+                        end
+                    end
+                end
             end
         end
 
@@ -213,7 +235,7 @@ function CharacterSlot:SetStolen(active)
     if self.CurrentModel then
         --self.CurrentModel:PivotTo(self.Slot:GetPivot()*CFrame.new(0,active and -100 or 0,0))
         for _,x in self.CurrentModel:GetDescendants() do
-            if x:IsA("Decal") or x:IsA("BasePart") and x.Name ~= "HumanoidRootPart" and x.Name ~= "VFX" then x.Transparency = active and 0.5 or 0 end
+            if x:IsA("Decal") or x:IsA("BasePart") and x.Name ~= "HumanoidRootPart" and x.Name ~= "VFX" then x.LocalTransparencyModifier = active and 0.5 or 0 end
         end
 
         self.CurrentModel:SetAttribute("IsStolen",active)

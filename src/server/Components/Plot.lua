@@ -9,6 +9,7 @@ local Component = require(ReplicatedStorage.Packages.Component)
 local Signal = require(ReplicatedStorage.Packages.Signal)
 
 local CharacterFolder = ServerStorage.GameAssets:FindFirstChild("Characters")
+local PlotThemes = ServerStorage.GameAssets:FindFirstChild("PlotThemes")
 
 local Utils = require(ReplicatedStorage.GameData).Utils
 
@@ -47,7 +48,7 @@ function Plot:Construct()
 
 end
 
-function Plot:SetOwner(player)
+function Plot:SetOwner(player, is_update)
      if self.CurrentOwner or not player or not player:IsA("Player") then return end
      self.CurrentOwner = player
      self.Instance:SetAttribute("OwnerId", player.UserId)
@@ -81,10 +82,12 @@ function Plot:SetOwner(player)
      end
 
      self.Connections.onCharacterAdded = player.CharacterAdded:Connect(onCharacterAdded)
-     onCharacterAdded(player.Character)
+     if not is_update then
+          onCharacterAdded(player.Character)
+     end
 
      local spawnLocation = self.Instance:FindFirstChildWhichIsA("SpawnLocation")
-     if spawnLocation then
+     if spawnLocation and not is_update then
           spawnLocation.Enabled = true
           player.RespawnLocation = spawnLocation
 
@@ -94,7 +97,11 @@ function Plot:SetOwner(player)
      end
 
      self.PlotSign.OwnerLabel.Text = string.format("%s's Castle",player.DisplayName)
-     self:LockGate()
+     if is_update then
+          self:UnlockGate()
+     else
+          self:LockGate()
+     end
 end
 
 function Plot:SetBannerColor(color: Color3)
@@ -110,6 +117,65 @@ function Plot:SetBannerColor(color: Color3)
      self.BannerColor = color
 end
 
+function Plot:ApplyModel(style)
+     local themeFolder = PlotThemes:FindFirstChild(style)
+     local plotTemplate = themeFolder and themeFolder:FindFirstChild("Plot")
+     if themeFolder and plotTemplate then
+          local newPlot = plotTemplate:Clone()
+          newPlot:SetAttribute("Index", self.Instance:GetAttribute("Index"))
+          newPlot:PivotTo(self.Instance:GetPivot())
+          newPlot.Parent = workspace.Plots
+
+          self.Instance:Destroy()
+          local owner = self.CurrentOwner
+
+          Plot:WaitForInstance(newPlot):andThen(function(comp)
+               local is_custom = style ~= "Default"
+               comp.IsCustomModel = is_custom
+
+               if is_custom then
+                    comp.CurrentTheme = style
+               else
+                    comp:SetBaseTheme(style)
+               end
+
+               local profileService = Knit.GetService("ProfileService")
+               local data = profileService:GetData(owner)
+
+               comp:SetOwner(owner, true)
+               comp:SetFloors(math.ceil(#data.Inventory.Characters/8)-1)
+               comp:LoadCharacters(data.Inventory.Characters)
+               comp:SetBannerColor(data.Settings["Banner Color"] and Color3.fromHex(data.Settings["Banner Color"]) or Color3.new(1,1,1))
+               comp:SetBaseTheme(data.Settings["Base Theme"] or "Normal")
+
+               comp.OnSlotCollected:Connect(function(slotIdx, amount, offlineAmount)
+
+                    profileService:Dispatch(owner,{
+                         type = "ADD_COINS", payload = amount + offlineAmount, 
+                         logEconomy = { transactionType = Enum.AnalyticsEconomyTransactionType.Gameplay.Name }
+                    })
+
+                    profileService:Dispatch(owner, { type = "UPDATE_PROFIT", payload = {
+                         slot = slotIdx,
+                         amount = -1*math.abs(amount),
+                         offlineAmount = -1*math.abs(offlineAmount)
+                    }})
+               end)
+          end)
+          -- for _,x in plotTemplate:GetChildren() do
+          --      local existing = x:FindFirstChild(x.Name)
+          --      if x:IsA("Model") then
+          --           local newModel = existing:Clone()
+          --           newModel:PivotTo(x:GetPivot())
+          --           newModel.Parent = x.Parent
+
+          --      if existing then
+                    
+          --      end
+          -- end
+     end
+end
+
 function Plot:SetBaseTheme(themeName: string)
      local color = ({
           ["Normal"] = Color3.fromRGB(139, 137, 140),
@@ -117,39 +183,48 @@ function Plot:SetBaseTheme(themeName: string)
           ["Diamond"] = Color3.fromRGB(18, 238, 212),
      })[themeName]
 
-     if themeName == "Rainbow" and self.CurrentTheme ~= "Rainbow" then
-          task.spawn(function()
-               self.CurrentTheme = themeName
-               while self.CurrentTheme == "Rainbow" do
-                    for hue=0,1,(1/12) do
-                         local tweens = {}
-                         for _,part in self.Instance:GetDescendants() do
-                              if part:IsA("BasePart") and part.Name == "ColorPart" then
-                                   local tween = TweenService:Create(part,TweenInfo.new(1),{Color = Color3.fromHSV(hue,1,1)})
-                                   table.insert(tweens,tween)
-                                   tween:Play()
-                              end
-                         end
-                         self.ActiveRainbowTweens = tweens
-                         task.wait(1)
-                    end
-               end
-          end)
-     elseif color then
-          self.CurrentTheme = themeName
-          if self.ActiveRainbowTweens then
-               for _,tween in self.ActiveRainbowTweens do tween:Cancel() end
-               self.ActiveRainbowTweens = nil
+     if themeName == "Volcanic" then
+          self:ApplyModel(themeName)
+     else
+          if self.IsCustomModel then
+               self:ApplyModel(themeName)
+               return
           end
+          if themeName == "Rainbow" and self.CurrentTheme ~= "Rainbow" then
+               task.spawn(function()
+                    self.CurrentTheme = themeName
+                    while self.CurrentTheme == "Rainbow" do
+                         for hue=0,1,(1/12) do
+                              local tweens = {}
+                              for _,part in self.Instance:GetDescendants() do
+                                   if part:IsA("BasePart") and part.Name == "ColorPart" then
+                                        local tween = TweenService:Create(part,TweenInfo.new(1),{Color = Color3.fromHSV(hue,1,1)})
+                                        table.insert(tweens,tween)
+                                        tween:Play()
+                                   end
+                              end
+                              self.ActiveRainbowTweens = tweens
+                              task.wait(1)
+                         end
+                    end
+               end)
+          elseif color then
+               self.CurrentTheme = themeName
+               if self.ActiveRainbowTweens then
+                    for _,tween in self.ActiveRainbowTweens do tween:Cancel() end
+                    self.ActiveRainbowTweens = nil
+               end
 
-          for _,part in self.Instance:GetDescendants() do
-               if part:IsA("BasePart") then
-                    if part.Name == "ColorPart" then part.Color = color
-                    elseif part.Name == "ColorPart2" then
-                         if themeName == "Normal" then part.Color = Color3.fromRGB(98, 97, 99)
-                         else part.Color = color end
+               for _,part in self.Instance:GetDescendants() do
+                    if part:IsA("BasePart") then
+                         if part.Name == "ColorPart" then part.Color = color
+                         elseif part.Name == "ColorPart2" then
+                              if themeName == "Normal" then part.Color = Color3.fromRGB(98, 97, 99)
+                              else part.Color = color end
+                         end
                     end
                end
+          
           end
      end
 end
@@ -173,8 +248,18 @@ function Plot:SetFloors(numFloors)
           end
      end
 
-     if hasFloors then
+     if hasFloors then 
           local floorTemplate = ServerStorage.GameAssets:FindFirstChild("PlotUpgrade")
+          if self.IsCustomModel then
+               local themeFolder = PlotThemes:FindFirstChild(self.CurrentTheme)
+               local plotTemplate = themeFolder and themeFolder:FindFirstChild("PlotUpgrade")
+               if plotTemplate then
+                    floorTemplate = plotTemplate
+               else
+                    warn(`Failed to find PlotUpgrade for {self.CurrentTheme}`)
+               end
+          end
+
           for idx=1,numFloors do
                local prevFloor = self.Instance:FindFirstChild("PlotUpgrade_"..(idx-1)) or self.Instance
                local newFloor = floorTemplate:Clone()
@@ -196,7 +281,9 @@ function Plot:SetFloors(numFloors)
                if prevFloor ~= self.Instance then prevFloor.Roof:Destroy() end
           end
           self:SetBannerColor(self.BannerColor or Color3.new(1,1,1))
-          self:SetBaseTheme(self.CurrentTheme or "Normal")
+          if not self.IsCustomModel then
+               self:SetBaseTheme(self.CurrentTheme or "Normal")
+          end
      end
      self.NumFloors = numFloors
 end

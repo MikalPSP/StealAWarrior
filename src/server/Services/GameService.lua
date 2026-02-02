@@ -82,7 +82,32 @@ function GameService:KnitStart()
 
         for k,v in charData do instance:SetAttribute(k,v) end
 
+        for _,mutation in ipairs({"Volcanic"}) do
+            local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
+            if not variantFolder or not variantFolder:FindFirstChild(instance.Name) then
+                local newInstance = instance:Clone()
+                newInstance.Name = string.format("(%s) %s",mutation,instance.Name)
+                local pbrTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation.."_Appearance")
+                if pbrTemplate then
+                    for _,x in newInstance:GetDescendants() do
+                        if x:IsA("MeshPart") then
+                            if pbrTemplate:IsA("Texture") then
+                                for _,e in Enum.NormalId:GetEnumItems() do
+                                    local texture = pbrTemplate:Clone()
+                                    texture.Face = e
+                                    texture.Parent = x
+                                end
+                            else
+                                pbrTemplate:Clone().Parent = x
+                            end
+                        end
+                    end
+                end
+                self:BuildViewportItem(newInstance)
+            end
+        end
         self:BuildViewportItem(instance)
+
         return Sift.Dictionary.merge(charData,{
             Name = instance.Name,
             Instance = instance
@@ -333,8 +358,6 @@ function GameService:KnitStart()
             -- end
         end
     end)
-
-    --game.StarterPlayer.CharacterWalkSpeed = 50
 
     Players.PlayerRemoving:Connect(function(plr)
         for _,p in self.Plots do
@@ -684,24 +707,44 @@ function GameService:SpawnCharacter(name, mutation)
             charData.Mutation = mutation
 
             local effectTemplate = ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation)
-            if not hasMutationVariant and effectTemplate then
-                local eff = effectTemplate:Clone()
-                eff.CanCollide, eff.Anchored = false, false
+            if not hasMutationVariant then
+                
+                if effectTemplate then
+                    local eff = effectTemplate:Clone()
+                    eff.CanCollide, eff.Anchored = false, false
 
-                local weld = Instance.new("Weld")
-                weld.Part0 = charModel.PrimaryPart
-                weld.Part1 = eff
-                weld.Parent = eff
+                    local weld = Instance.new("Weld")
+                    weld.Part0 = charModel.PrimaryPart
+                    weld.Part1 = eff
+                    weld.Parent = eff
 
-                eff.Parent = charModel.PrimaryPart
+                    eff.Parent = charModel.PrimaryPart
 
-                for _,x in eff:GetDescendants() do
-                    if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
+                    for _,x in eff:GetDescendants() do
+                        if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
+                    end
+
+                    local mainBone = charData.Type == "LuckyWarrior" and charModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
+                    if mainBone then
+                        for _,x in eff:GetChildren() do x.Parent = mainBone end
+                    end
                 end
 
-                local mainBone = charData.Type == "LuckyWarrior" and charModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
-                if mainBone then
-                    for _,x in eff:GetChildren() do x.Parent = mainBone end
+                local pbrTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation.."_Appearance")
+                if pbrTemplate then
+                    for _,x in charModel:GetDescendants() do
+                        if x:IsA("MeshPart") then
+                            if pbrTemplate:IsA("Texture") then
+                                for _,e in Enum.NormalId:GetEnumItems() do
+                                    local texture = pbrTemplate:Clone()
+                                    texture.Face = e
+                                    texture.Parent = x
+                                end
+                            else
+                                pbrTemplate:Clone().Parent = x
+                            end
+                        end
+                    end
                 end
             end
 
@@ -760,6 +803,8 @@ function GameService:SpawnCharacter(name, mutation)
             local price = prompt:GetAttribute("Price") or charData.Price
             local oldAmount = profileService:GetCoins(player)
             local plot = self:GetPlotForPlayer(player)
+
+            if RunService:IsStudio() then price = 0 end
 
             local canAfford = typeof(oldAmount)=="number" and oldAmount >= price
             local numPending = self.Client.PendingCharacters:GetFor(player)
@@ -916,8 +961,8 @@ function GameService:StealCharacter(player, plot, idx)
             local charModel = charData.Instance:Clone()
 
             if player:DistanceFromCharacter(charModel:GetPivot().Position)>=10 then
-                warn(`[POSSIBLE EXPLOIT] {player.Name} <{player.UserId}> was too far from the CharacterSlot when attempting to steal!`)
-                return
+                --warn(`[POSSIBLE EXPLOIT] {player.Name} <{player.UserId}> was too far from the CharacterSlot when attempting to steal!`)
+                --return
             end
 
             local hasMutationVariant = false
@@ -940,6 +985,48 @@ function GameService:StealCharacter(player, plot, idx)
                     noc.Part0 = x
                     noc.Part1 = playerPlot.Gate.PrimaryPart
                     noc.Parent = x
+                end
+            end
+
+            local effectTemplate = ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation)
+            if not hasMutationVariant then
+                
+                if effectTemplate then
+                    local eff = effectTemplate:Clone()
+                    eff.CanCollide, eff.Anchored = false, false
+
+                    local weld = Instance.new("Weld")
+                    weld.Part0 = charModel.PrimaryPart
+                    weld.Part1 = eff
+                    weld.Parent = eff
+
+                    eff.Parent = charModel.PrimaryPart
+
+                    for _,x in eff:GetDescendants() do
+                        if x:IsA("ParticleEmitter") then x:AddTag("VFX") end
+                    end
+
+                    local mainBone = charData.Type == "LuckyWarrior" and charModel.PrimaryPart:FindFirstChildWhichIsA("Bone") or nil
+                    if mainBone then
+                        for _,x in eff:GetChildren() do x.Parent = mainBone end
+                    end
+                end
+
+                local pbrTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation.."_Appearance")
+                if pbrTemplate then
+                    for _,x in charModel:GetDescendants() do
+                        if x:IsA("MeshPart") then
+                            if pbrTemplate:IsA("Texture") then
+                                for _,e in Enum.NormalId:GetEnumItems() do
+                                    local texture = pbrTemplate:Clone()
+                                    texture.Face = e
+                                    texture.Parent = x
+                                end
+                            else
+                                pbrTemplate:Clone().Parent = x
+                            end
+                        end
+                    end
                 end
             end
 
@@ -1000,7 +1087,7 @@ function GameService:StealCharacter(player, plot, idx)
                 if player then self.Client.StolenCharacter:SetFor(player,nil) end
                 if plrCharacter.Humanoid then plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed end
 
-                charModel:Destroy() animTrack:Stop()
+                animTrack:Stop() charModel:Destroy() weld:Destroy()
 
                 targetSlot:SetStolen(false)
                 profileService:GlobalDispatch(targetUserId,{
@@ -1034,7 +1121,8 @@ function GameService:StealCharacter(player, plot, idx)
                     didFinish = dist<=5
                 else
                     for _,conn in connections do conn:Disconnect() end
-                    self.Client.StolenCharacter:SetFor(player,nil)
+                    if player then self.Client.StolenCharacter:SetFor(player,nil) end
+                    if plrCharacter.Humanoid then plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed end
                     animTrack:Stop() charModel:Destroy() weld:Destroy()
                     profileService:GlobalDispatch(targetUserId,{
                         type = "REMOVE_CHARACTER",
@@ -1050,8 +1138,6 @@ function GameService:StealCharacter(player, plot, idx)
                         [Enum.AnalyticsCustomFieldKeys.CustomField02.Name] = charData.Rarity,
                         [Enum.AnalyticsCustomFieldKeys.CustomField03.Name] = charData.Mutation
                     })
-
-                    if plrCharacter.Humanoid then plrCharacter.Humanoid.WalkSpeed = game.StarterPlayer.CharacterWalkSpeed end
                 end
             end)
         end
@@ -1138,7 +1224,7 @@ function GameService:MoveCharacter(player, slotIdx, is_placing)
             local function cleanup()
                 for _,conn in connections do conn:Disconnect() end
                 if player then self.Client.MovingCharacter:SetFor(player,nil) end
-                slot:SetMoving(false)
+                slot:SetMoving(false) weld:Destroy()
                 animTrack:Stop()
 
                 local movingCharacter = plrCharacter:FindFirstChild("MovingCharacter")
@@ -1204,7 +1290,7 @@ function GameService.Client:GrantSpinReward(player, rewardType)
         self.Server:GiveCharacter(player, charData)
         self.Server:SendNotification(player, string.format("You've been awarded \"%s\"",charData.Name), Color3.fromRGB(253, 216, 53))
     elseif rewardType == "Event" then
-        Knit.GetService("EventService"):StartEvent("Gold") --Volcanic
+        Knit.GetService("EventService"):StartEvent("Volcanic") --Volcanic
 
     elseif typeof(coinRewards[rewardType])=="number" then
         local amount = coinRewards[rewardType]

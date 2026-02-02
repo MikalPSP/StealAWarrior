@@ -81,16 +81,34 @@ Knit.OnStart():andThen(function()
                 elseif #eventName>0 then
                     Knit.GetService("EventService"):StartEvent(eventName)
                 end
+            elseif msg:match("^ban .+") then
+                local name = msg:match("^ban (.+)")
+                for _,p in ipairs(Players:GetPlayers()) do
+                    if (p.Name == name or p.DisplayName==name) then
+                        Players:BanAsync({
+                            UserIds = {p.UserId},
+                            Duration = -1,
+                            DisplayReason = "You have been banned for cheating",
+                            PrivateReason = "Exploiting",
+                        })
+                        break
+                    end
+                end          
             elseif msg=="serverluck" then
                 Knit.GetService("EventService"):SetServerLuck(2,5*60)
             elseif msg=="clear characters" then
-                for _,p in Players:GetPlayers() do
-                    Knit.GetService("ProfileService"):Dispatch(p,{type = "CLEAR_CHARACTERS"})
+                for _,x in ipairs(workspace.SpawnedCharacters:GetChildren()) do
+                    if not x:GetAttribute("IsBought") then x:Destroy() end
                 end
             elseif msg == "lgbt" then
                 local plot = Knit.GetService("GameService"):GetPlotForPlayer(plr)
                 if plot then
                     plot:SetBaseTheme("Rainbow")
+                end
+            elseif msg == "volcanic" then
+                local plot = Knit.GetService("GameService"):GetPlotForPlayer(plr)
+                if plot then
+                    plot:SetBaseTheme("Volcanic")
                 end
             elseif msg:match("^spawn.+$") then
                 local mutation, charName = msg:match("^spawn(%w-) (.+)")
