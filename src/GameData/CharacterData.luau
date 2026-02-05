@@ -97,7 +97,7 @@ local Data = {
     ["Skeletino Raptorino"]    = { Index = 1,  Rarity = "Secret", Era = "Prehistoric",     Profit = 5000,  Price = 750000 },
     ["Sabertoothy Chomperino"] = { Index = 2,  Rarity = "Secret", Era = "Prehistoric",     Profit = 6000,  Price = 1_000_000 },
     ["Chariotus Spoketron"]    = { Index = 3,  Rarity = "Secret", Era = "Ancient",         Profit = 8000,  Price = 2_000_000 },
-    ["Cerberino Vulcano"]      = { Index = 4,  Rarity = "Secret", Era = "Ancient",         Profit = 10000, Price = 3_500_000 },
+    ["Cerberino Vulcano"]      = { Index = 4,  Rarity = "Secret", Era = "Ancient",         Profit = 10000, Price = 3_500_000, WeightFactor = 2 },
     ["Regalroar Majestico"]    = { Index = 5,  Rarity = "Secret", Era = "Medieval",        Profit = 12500, Price = 5_000_000 },
     ["Samurino Craneo"]        = { Index = 6,  Rarity = "Secret", Era = "Medieval",        Profit = 15000, Price = 7_500_000 },
     --["Napolini Cannonini"]     = { Index = 7,  Rarity = "Secret", Era = "Early Modern",        Profit = 25000, Price = 10_000_000, WeightFactor = 0 },

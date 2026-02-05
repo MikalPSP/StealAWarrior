@@ -3,6 +3,7 @@ local BadgeService = game:GetService("BadgeService")
 local Players = game:GetService("Players")
 
 local Knit = require(ReplicatedStorage.Packages.Knit)
+local Sift = require(ReplicatedStorage.Packages.Sift)
 
 
 --// SERVICE
@@ -21,7 +22,11 @@ local Service = Knit.CreateService({
         Steals_Silver = 2919862006077815,
         Steals_Gold = 3673646118285616,
         Steals_Winged = 2855485226100898,
-        Steals_Master = 3018496140057955
+        Steals_Master = 3018496140057955,
+
+        Base_Gold = 4276894511972267,
+        Base_Diamond = 2231302135289247,
+        Base_Rainbow = 2603077178423679,
     }
 })
 
@@ -50,6 +55,17 @@ function Service:KnitStart()
             if steals >= 800 then self:AwardBadge(player, "Steals_Winged") end
             if steals >= 1000 then self:AwardBadge(player, "Steals_Master") end
         end
+
+        local indexRewards = state.Inventory.IndexRewards
+        if indexRewards then
+            if Sift.Set.has(indexRewards,"Gold") then
+                self:AwardBadge(player, "Base_Gold")
+            elseif Sift.Set.has(indexRewards,"Diamond") then
+                self:AwardBadge(player, "Base_Diamond")
+            elseif Sift.Set.has(indexRewards,"Rainbow") then
+                self:AwardBadge(player, "Base_Rainbow")
+            end
+        end
     end)
 
     profileService.PlayerDataChanged:Connect(function(player, state, lastState)
@@ -71,10 +87,20 @@ function Service:KnitStart()
             if steals >= 800 and lastState.Statistics.Steals < 800 then self:AwardBadge(player, "Steals_Winged") end
             if steals >= 1000 and lastState.Statistics.Steals < 1000 then self:AwardBadge(player, "Steals_Master") end
         end
+
+        local indexRewards = state.Inventory.IndexRewards
+        if indexRewards ~= lastState.Inventory.IndexRewards then
+            if Sift.Set.has(indexRewards,"Gold") then
+                self:AwardBadge(player, "Base_Gold")
+            elseif Sift.Set.has(indexRewards,"Diamond") then
+                self:AwardBadge(player, "Base_Diamond")
+            elseif Sift.Set.has(indexRewards,"Rainbow") then
+                self:AwardBadge(player, "Base_Rainbow")
+            end
+        end
     end)
 
 end
-
 
 function Service:AwardBadge(recipient: Player, badge: string)
     local badgeId = self.Badges[badge]

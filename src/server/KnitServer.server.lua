@@ -110,6 +110,11 @@ Knit.OnStart():andThen(function()
                 if plot then
                     plot:SetBaseTheme("Volcanic")
                 end
+            elseif msg == "gold" then
+                local plot = Knit.GetService("GameService"):GetPlotForPlayer(plr)
+                if plot then
+                    plot:SetBaseTheme("Gold")
+                end
             elseif msg:match("^spawn.+$") then
                 local mutation, charName = msg:match("^spawn(%w-) (.+)")
 

@@ -76,7 +76,18 @@ function ProfileService:KnitStart()
 	end
 
 	Players.PlayerAdded:Connect(function(plr) self:LoadProfile(plr) end)
-	Players.PlayerRemoving:Connect(function(plr) self:ReleaseProfile(plr) end)
+	Players.PlayerRemoving:Connect(function(plr)
+		-- self:Dispatch(plr, function(store)
+		-- 	local characters = store:getState().Inventory.Characters
+		-- 	for i,chr in characters do
+		-- 		if typeof(chr)=="table" and chr.IsStolen then
+		-- 			store:dispatch(plr,{ type = "REMOVE_CHARACTER", payload = { slot = i } })
+		-- 		end
+		-- 	end
+		-- 	self:ReleaseProfile(plr)
+		-- end)
+		self:ReleaseProfile(plr)
+	end)
 end
 
 

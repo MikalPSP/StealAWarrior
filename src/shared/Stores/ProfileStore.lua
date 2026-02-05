@@ -119,13 +119,21 @@ local inventoryReducer = function(state, action)
     elseif action.type == "SET_STOLEN" and typeof(payload.slot)=="number" then
         return Dictionary.merge(state,{
             Characters = Array.update(state.Characters,payload.slot,function(old)
-                return Dictionary.merge(old,{ IsStolen = payload.active or Sift.None })
+                if typeof(old)=="table" and next(old)~=nil then
+                    return Dictionary.merge(old,{ IsStolen = payload.active or Sift.None })
+                else
+                    return "Empty"
+                end
             end)
         })
     elseif action.type == "SET_CARRIED" and typeof(payload.slot)=="number" then
         return Dictionary.merge(state,{
             Characters = Array.update(state.Characters,payload.slot,function(old)
-                return Dictionary.merge(old,{ IsCarried = payload.active or Sift.None })
+                if typeof(old)=="table" and next(old)~=nil then
+                    return Dictionary.merge(old,{ IsCarried = payload.active or Sift.None })
+                else
+                    return "Empty"
+                end
             end)
         })
     elseif action.type == "MOVE_CHARACTER" and typeof(payload.slot)=="number" and typeof(payload.target)=="number" then
@@ -169,7 +177,15 @@ local inventoryReducer = function(state, action)
         })
     end
 
-    return state
+    return Dictionary.merge(state,{
+        Characters = Sift.Array.map(state.Characters,function(v)
+            if typeof(v)=="table" and next(v)==nil then
+                return "Empty"
+            end
+            return v
+        end)
+    })
+    --return state
 end
 
 local statusReducer = function(state,action)
@@ -309,7 +325,7 @@ return {
     new = function(initialState, middlewares)
         local reducer = function(state,action)
             if action.type == "SET_DATA" then
-                return action.payload
+                local data = action.payload
             elseif action.type == "RESET_DATA" then
                 return rootReducer(nil,{})
             end

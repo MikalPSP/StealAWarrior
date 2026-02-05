@@ -119,8 +119,14 @@ end
 
 function Plot:ApplyModel(style)
      local themeFolder = PlotThemes:FindFirstChild(style)
-     local plotTemplate = themeFolder and themeFolder:FindFirstChild("Plot")
-     if themeFolder and plotTemplate then
+     local plotTemplate, is_custom = themeFolder and themeFolder:FindFirstChild("Plot") or nil, true
+     if not plotTemplate then
+          plotTemplate = ServerStorage.GameAssets:FindFirstChild("Plot")
+          is_custom = false
+     end
+
+     print(plotTemplate, style)
+     if plotTemplate then
           local newPlot = plotTemplate:Clone()
           newPlot:SetAttribute("Index", self.Instance:GetAttribute("Index"))
           newPlot:PivotTo(self.Instance:GetPivot())
@@ -130,7 +136,6 @@ function Plot:ApplyModel(style)
           local owner = self.CurrentOwner
 
           Plot:WaitForInstance(newPlot):andThen(function(comp)
-               local is_custom = style ~= "Default"
                comp.IsCustomModel = is_custom
 
                if is_custom then
@@ -146,7 +151,6 @@ function Plot:ApplyModel(style)
                comp:SetFloors(math.ceil(#data.Inventory.Characters/8)-1)
                comp:LoadCharacters(data.Inventory.Characters)
                comp:SetBannerColor(data.Settings["Banner Color"] and Color3.fromHex(data.Settings["Banner Color"]) or Color3.new(1,1,1))
-               comp:SetBaseTheme(data.Settings["Base Theme"] or "Normal")
 
                comp.OnSlotCollected:Connect(function(slotIdx, amount, offlineAmount)
 
@@ -190,6 +194,7 @@ function Plot:SetBaseTheme(themeName: string)
                self:ApplyModel(themeName)
                return
           end
+
           if themeName == "Rainbow" and self.CurrentTheme ~= "Rainbow" then
                task.spawn(function()
                     self.CurrentTheme = themeName
@@ -237,6 +242,9 @@ function Plot:SetFloors(numFloors)
                for _,z in x:GetDescendants() do
                     if z:IsA("BasePart") then
                          z.CanCollide, z.Transparency = not hasFloors, hasFloors and 1 or 0
+                         for _,v in z:GetDescendants() do
+                              if v:IsA("Texture") then v.Texture = z.Transparency end
+                         end
                     end
                end
           elseif x:IsA("Model") and x.Name:match("PlotUpgrade")~=nil then x:Destroy()
@@ -333,8 +341,15 @@ function Plot:GetCharacters()
 end
 
 function Plot:Reset()
-     self.BackupModel.Parent = self.Instance.Parent
-     self.Instance:Destroy()
+     local plotTemplate = ServerStorage.GameAssets:FindFirstChild("Plot")
+     if plotTemplate then
+          local newPlot = plotTemplate:Clone()
+          newPlot:SetAttribute("Index", self.Instance:GetAttribute("Index"))
+          newPlot:PivotTo(self.Instance:GetPivot())
+          newPlot.Parent = workspace.Plots
+
+          self.Instance:Destroy()
+     end
 end
 
 function Plot:IsOwner(player)

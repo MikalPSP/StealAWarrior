@@ -84,7 +84,12 @@ function GameService:KnitStart()
 
         for _,mutation in ipairs({"Volcanic"}) do
             local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
-            if not variantFolder or not variantFolder:FindFirstChild(instance.Name) then
+            local mutationVariant = variantFolder and variantFolder:FindFirstChild(instance.Name)
+            if mutationVariant then
+                local newInstance = instance:Clone()
+                newInstance.Name = string.format("(%s) %s",mutation,instance.Name)
+                self:BuildViewportItem(newInstance)
+            elseif instance:FindFirstChild("Humanoid") then
                 local newInstance = instance:Clone()
                 newInstance.Name = string.format("(%s) %s",mutation,instance.Name)
                 local pbrTemplate = mutation and ServerStorage.GameAssets.Effects.Mutations:FindFirstChild(mutation.."_Appearance")
@@ -106,6 +111,7 @@ function GameService:KnitStart()
                 self:BuildViewportItem(newInstance)
             end
         end
+
         self:BuildViewportItem(instance)
 
         return Sift.Dictionary.merge(charData,{
@@ -169,12 +175,13 @@ function GameService:KnitStart()
         if isDouble then multiplier+=2 end
         if isGroup then multiplier+=.5 end
         if newPlot then
-            local inventoryData = data.Inventory
+            --local inventoryData = data.Inventory
             local lastLoginTime = profileService:GetProfile(player):GetMetaTag("LastOnlineTime")
-            local offlineTime = typeof(lastLoginTime)=="number" and math.floor(os.time() - lastLoginTime) or 0
-            if offlineTime > 0 then
+            local offlineTime = math.min(3*86400, typeof(lastLoginTime)=="number" and math.floor(os.time() - lastLoginTime) or 0) --3 Day Maximum Offline Time
 
-                offlineTime = math.min(offlineTime, 3*86400) --3 Day Maximum Offline Time
+            task.delay(5,function()
+                local inventoryData = profileService:GetInventory(player,"Characters")
+
                 local tierUpgrades = inventoryData.Tiers
                 local totalOffline = 0
                 for i,chr in inventoryData.Characters do
@@ -184,7 +191,7 @@ function GameService:KnitStart()
                                 type = "REMOVE_CHARACTER",
                                 payload = { slot = i }
                             })
-                        else
+                        elseif offlineTime >= 60 then
                             local chrData = self.Characters[chr.Name]
                             if not chrData then continue end
                             local baseProfit = GameData.calculateProfit(chrData.Profit, chr.Tier, tierUpgrades and tierUpgrades[i].Level or 1, chrData.Mutation)
@@ -198,7 +205,7 @@ function GameService:KnitStart()
                         end
                     end
                 end
-            end
+            end)
 
             newPlot:SetOwner(player)
             newPlot:SetFloors(math.ceil(#data.Inventory.Characters/8)-1)

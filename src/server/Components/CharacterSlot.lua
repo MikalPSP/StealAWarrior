@@ -122,9 +122,7 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
 
     local hasMutationVariant = false
     if typeof(mutation)=="string" and mutation ~= "Base" then
-        print(mutation)
         local variantFolder = ServerStorage.GameAssets.MutationVariants:FindFirstChild(mutation)
-        print(variantFolder)
         if variantFolder and variantFolder:FindFirstChild(characterTemplate.Name) then
             local variantModel = variantFolder[characterTemplate.Name]:Clone()
             for k,v in characterTemplate:GetAttributes() do if k~="RBX_ReimportId" then variantModel:SetAttribute(k,v) end end
@@ -235,7 +233,15 @@ function CharacterSlot:SetStolen(active)
     if self.CurrentModel then
         --self.CurrentModel:PivotTo(self.Slot:GetPivot()*CFrame.new(0,active and -100 or 0,0))
         for _,x in self.CurrentModel:GetDescendants() do
-            if x:IsA("Decal") or x:IsA("BasePart") and x.Name ~= "HumanoidRootPart" and x.Name ~= "VFX" then x.LocalTransparencyModifier = active and 0.5 or 0 end
+            if x:IsA("Decal") or x:IsA("BasePart") and x.Name ~= "HumanoidRootPart" and x.Name ~= "VFX" then
+                local origTransparency = x:GetAttribute("OriginalTransparency")
+                if not origTransparency then
+                    x:SetAttribute("OriginalTransparency",x.Transparency)
+                    origTransparency = x.Transparency
+                end
+
+                x.Transparency = active and 0.5 or origTransparency
+            end
         end
 
         self.CurrentModel:SetAttribute("IsStolen",active)
