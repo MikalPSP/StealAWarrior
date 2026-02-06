@@ -293,10 +293,6 @@ function CharacterSlot:AttachCharacter(characterTemplate: Model|nil, mutation)
     self:SetStolen(false)
 end
 
-function CharacterSlot:Animate()
-    --This function was going to be used to add the idle animation but ended up being integrated into :AttachCharacter() instead
-end
-
 function CharacterSlot:SetStolen(active)
     if self.IsStolen == active then return end
     self.IsStolen = active
