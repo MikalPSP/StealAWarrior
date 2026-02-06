@@ -176,12 +176,11 @@ function GameService:KnitStart()
         if isGroup then multiplier+=.5 end
         if newPlot then
             --local inventoryData = data.Inventory
-            local lastLoginTime = profileService:GetProfile(player):GetMetaTag("LastOnlineTime")
+            local lastLoginTime = profileService:GetMetaTag(player, "LastOnlineTime")
             local offlineTime = math.min(3*86400, typeof(lastLoginTime)=="number" and math.floor(os.time() - lastLoginTime) or 0) --3 Day Maximum Offline Time
 
             task.delay(5,function()
-                local inventoryData = profileService:GetInventory(player,"Characters")
-
+                local inventoryData = profileService:GetInventory(player)
                 local tierUpgrades = inventoryData.Tiers
                 local totalOffline = 0
                 for i,chr in inventoryData.Characters do

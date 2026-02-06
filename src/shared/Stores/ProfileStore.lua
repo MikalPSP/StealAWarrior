@@ -318,7 +318,13 @@ local rootReducer = Rodux.combineReducers({
     Inventory = inventoryReducer,
     Statistics = statisticReducer,
     Settings = settingsReducer,
-    Status = statusReducer
+    Status = statusReducer,
+    MetaTags = function(state,action)
+        if action.type == "SET_METATAG" and typeof(action.key)=="string" then
+            return Sift.Dictionary.merge(state,{[action.key] = action.value})
+        end
+        return nil --state or {}
+    end,
 })
 
 return {
