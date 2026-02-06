@@ -76,20 +76,47 @@ function CharacterSlot:Start()
     -- The Triggered Event is a event configured in the CollectButton Component that fires when the button is pressed
     --[[
         ...
-        self.Base.Touched:Connect(function(hitPart)
-            local player = game.Players:GetPlayerFromCharacter(hitPart.Parent) --Make sure it's a player touching
-            if self.Enabled and canTouch and player and self:IsOwner(player) then --Check ownership of the button and if it's enabled
-                canTouch = false
-                for _,t in tweenEffects do t:Play() end
+        function TouchButton:Start()
+            local canTouch = true
+            local tweenInfo = TweenInfo.new(.25,Enum.EasingStyle.Quad,Enum.EasingDirection.Out,0,true)
 
-                for _,b in beams do
-                    b.Attachment1.CFrame = CFrame.new(2,0,0)
+            --We set up tweenEffects we can keep using whenever the button is touched
+            local tweenEffects, beams = {}, {} do
+                for _,x in self.Instance:GetDescendants() do
+                    if x:IsA("Decal") and x.Name == "Vignette" then
+                        table.insert(tweenEffects, TweenService:Create(x,tweenInfo,{ Transparency = .5}))
+                    elseif x:IsA("Beam") then
+                        table.insert(tweenEffects, TweenService:Create(x,tweenInfo,{ Brightness = 10}))
+
+                        x.Attachment1.CFrame = CFrame.new(0,0,0)
+                        table.insert(tweenEffects, TweenService:Create(x.Attachment1,TweenInfo.new(.5),{ CFrame = x.Attachment1.CFrame }))
+                        table.insert(beams, x)
+                    end
                 end
+            end
 
-                self.Triggered:Fire(player)
-                task.delay(1,function()
-                    canTouch = true
-                end)
+
+            self.Base.Touched:Connect(function(hitPart)
+                local player = game.Players:GetPlayerFromCharacter(hitPart.Parent)
+                if self.Enabled and canTouch and player and self:IsOwner(player) then --Check for ownership, debounce state, and player validity
+                    canTouch = false
+                    --Play those tween effects we stored for later
+                    for _,t in tweenEffects do t:Play() end
+
+                    --We move the beams up, because if you look at the Beam setup, Attachment1's end tween in CFrame.new(0,0,0)
+                    --This allows us to do a cooler animation because it snaps to 2 studs up and then tweens down to 0 studs in .5 seconds
+                    for _,b in beams do
+                        b.Attachment1.CFrame = CFrame.new(2,0,0)
+                    end
+
+                    self.Triggered:Fire(player) --We fire the triggered event that the CollectButton listens to
+                    
+                    -- 1 Second Debounce before allowing another touch
+                    task.delay(1,function()
+                        canTouch = true
+                    end)
+                end
+            end)
         end
     end)
     --]]
